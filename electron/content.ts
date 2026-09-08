@@ -74,6 +74,70 @@ const QUESTIONS:[string,string,number,number,number,string,string,string,string,
  ['GEN-000045','GEN',25,24,26,"What were the names of Isaac and Rebekah's two sons?",'Jacob and Joseph','Esau and Jacob','Ishmael and Isaac','Cain and Abel',1],
  ['GEN-000046','GEN',25,29,34,'How did Jacob get Esau to sell him his birthright?','He offered Esau land and livestock','He gave Esau bread and lentil stew when Esau was hungry','He promised Esau a share of his inheritance','He defeated Esau in a contest',1],
  ['GEN-000047','GEN',26,1,1,'Abimelek was king of what people?','The Egyptians','The Philistines','The Moabites','The Edomites',1],
+ ['GEN-000048','GEN',26,16,16,'Why did Abimelek tell Isaac to move away from the Philistines?','Isaac had taken land belonging to the Philistines','Isaac had become too powerful for them','Isaac refused to share his livestock with them','Isaac planned to become king of Gerar',1],
+ ['GEN-000049','GEN',27,15,29,"How did Jacob take Esau's blessing from their father Isaac?",'He convinced Esau to give him the blessing in exchange for food','He disguised himself as Esau and deceived Isaac into blessing him','He asked Rebekah to convince Isaac that he deserved the blessing','He waited until Esau left home and claimed the blessing belonged to him',1],
+ ['GEN-000050','GEN',28,20,22,'Who is the first person in the Bible recorded vowing to give God a tenth of everything God gave him?','Abraham','Isaac','Jacob','Joseph',2],
+ ['GEN-000051','GEN',29,20,27,'How did Laban deceive Jacob after Jacob worked seven years to marry Rachel?','He demanded Jacob work another seven years before allowing him to marry anyone','He gave Jacob Leah as his wife instead of Rachel','He sent Rachel away to another land','He required Jacob to give him all of his livestock',1],
+ ['GEN-000052','GEN',29,31,31,'Why was Leah able to have children while Rachel initially could not?','Leah prayed for children before Rachel did','The LORD saw that Leah was not loved and enabled her to conceive','Rachel refused to have children with Jacob','Laban asked God to bless Leah with children',1],
+ ['GEN-000053','GEN',29,31,32,"Who was Jacob's firstborn son?",'Joseph','Judah','Reuben','Levi',2],
+ ['GEN-000054','GEN',29,21,30,"What were the names of Jacob's four wives?",'Leah, Rachel, Bilhah, and Zilpah','Leah, Rachel, Rebekah, and Hagar','Rachel, Bilhah, Sarah, and Zilpah','Leah, Rebekah, Bilhah, and Keturah',0],
+ ['GEN-000055','GEN',30,37,43,'How did Jacob increase the size of his own flocks while working for Laban?',"He secretly took some of Laban's strongest animals",'He selectively bred the stronger animals so that more of the offspring became his','He purchased additional animals from neighboring shepherds','He traded his crops to Laban in exchange for livestock',1],
+ ['GEN-000056','GEN',31,19,19,'What did Rachel steal from her father, Laban?','His silver and gold','His household gods','His finest livestock','His family records',1],
+ // Supporting reference: Hosea 12:3–4.
+ ['GEN-000057','GEN',32,24,30,'Who did Jacob wrestle with through the night?','Esau','Laban','God','An Egyptian soldier',2],
+ ['GEN-000058','GEN',33,4,4,'How did Esau react when he saw his brother Jacob returning?','He attacked Jacob and his family','He refused to speak to Jacob','He ran to Jacob, embraced him, kissed him, and wept with him','He demanded that Jacob return his birthright',2],
+ // Supporting reference: Genesis 34:2.
+ ['GEN-000059','GEN',34,25,27,'Which two of Jacob’s sons attacked the city of Shechem, and why?','Reuben and Judah — because the city stole their livestock','Simeon and Levi — because Shechem had violated their sister Dinah','Joseph and Benjamin — because the city refused to trade with them','Dan and Naphtali — because Shechem had attacked Jacob',1],
+ ['GEN-000060','GEN',35,9,10,'What did God change Jacob’s name to?','Abraham','Israel','Judah','Ephraim',1],
+ // Full reference: Genesis 30:22–24; 35:16–18.
+ ['GEN-000061','GEN',35,16,18,'What were the names of Rachel’s two sons?','Reuben and Simeon','Joseph and Benjamin','Judah and Levi','Dan and Naphtali',1],
+ ['GEN-000062','GEN',35,16,19,'How did Rachel die?','She died during childbirth while giving birth to Benjamin','She died from an illness while traveling to Bethel','She was killed during an attack on Jacob’s family','She died during a famine in Canaan',0],
+ ['GEN-000063','GEN',35,23,23,'How many sons did Leah give birth to for Jacob?','Four','Five','Six','Seven',2],
+ // Supporting reference: Genesis 25:30.
+ ['GEN-000064','GEN',36,1,1,'What was Esau also known as?','Edom','Israel','Moab','Midian',0],
+ ['GEN-000065','GEN',37,5,11,'What two dreams did Joseph have that he told his brothers?','His brothers’ sheaves bowed down to his sheaf, and the sun, moon, and eleven stars bowed down to him','Seven healthy cows were eaten by seven thin cows, and seven heads of grain were swallowed by seven thin heads','A stairway reached to heaven, and angels went up and down on it','A great tree reached the heavens, and then an angel ordered it to be cut down',0],
+ // Supporting reference: Genesis 37:29–30.
+ ['GEN-000066','GEN',37,21,22,'Which of Joseph’s brothers tried to save him from being killed by the others?','Judah','Reuben','Simeon','Benjamin',1],
+ ['GEN-000067','GEN',37,26,27,'Which of Joseph’s brothers suggested selling him to the Ishmaelites instead of killing him?','Reuben','Simeon','Judah','Levi',2],
+ ["GEN-000068","GEN",38,6,11,"Who was Tamar to Judah?","His daughter","His daughter-in-law","His sister","His niece",1],
+ ["GEN-000069","GEN",39,1,1,"Who bought Joseph when he was taken to Egypt?","Pharaoh","Potiphar","The chief cupbearer","The prison warden",1],
+ ["GEN-000070","GEN",39,20,23,"What responsibility did the prison warden give Joseph?","He became a soldier in Pharaoh's army","He was put in charge of the other prisoners while in prison","He became Pharaoh's chief cupbearer","He became a merchant in Egypt",1],
+ ["GEN-000071","GEN",40,1,3,"Who was the master of the chief cupbearer and chief baker?","Potiphar","Pharaoh, king of Egypt","Joseph","The prison warden",1],
+ ["GEN-000072","GEN",40,20,22,"Which of Pharaoh's two imprisoned officials was restored to his position?","The chief baker","The chief cupbearer","Both were restored","Neither was restored",1],
+ ["GEN-000073","GEN",41,25,32,"What was the meaning of Pharaoh's dreams that Joseph interpreted?","Egypt would have seven years of abundance followed by seven years of famine","Egypt would defeat seven kingdoms and then be conquered by seven others","Pharaoh would reign for fourteen more years","The Nile would flood for seven years and then dry up for seven years",0],
+ ["GEN-000074","GEN",41,39,43,"What position did Pharaoh give Joseph after he interpreted Pharaoh's dreams?","Captain of Pharaoh's guard","Overseer of Potiphar's household","Second-in-command over Egypt under Pharaoh","Chief priest of Egypt",2],
+ ["GEN-000075","GEN",41,46,46,"How old was Joseph when he entered the service of Pharaoh, king of Egypt?","25 years old","30 years old","35 years old","40 years old",1],
+ ["GEN-000076","GEN",41,45,45,"What was the name of Joseph's wife?","Asenath","Tamar","Zipporah","Dinah",0],
+ ["GEN-000077","GEN",42,1,5,"Why did Joseph's brothers travel to Egypt?","To search for Joseph","To buy grain because of the famine","To work for Pharaoh","To escape from their father Jacob",1],
+ ["GEN-000078","GEN",42,15,20,"What did Joseph require his brothers to do to prove they were not spies?","Bring their youngest brother, Benjamin, to Egypt","Bring their father, Jacob, to Egypt","Return all the grain they had purchased","Work for Pharaoh for one year",0],
+ ["EXO-000001","EXO",2,10,10,"What explanation did Pharaoh's daughter give for naming the child Moses?","I drew him out of the water","God has heard my cry","A stranger in a foreign land","The LORD has delivered me",0],
+ ["EXO-000002","EXO",2,15,15,"Where did Moses flee when Pharaoh tried to kill him?","Canaan","Midian","Moab","Goshen",1],
+ ["EXO-000003","EXO",2,21,21,"What was the name of Moses’ wife?","Miriam","Zipporah","Rebekah","Asenath",1],
+ ["EXO-000004","EXO",2,22,22,"What was the name of Moses’ first son?","Gershom","Aaron","Eleazar","Joshua",0],
+ ["EXO-000005","EXO",3,1,1,"What was the name of Moses’ father-in-law?","Jethro","Laban","Abimelek","Potiphar",0],
+ ["EXO-000006","EXO",3,1,2,"Where did the angel of the LORD first appear to Moses?","Mount Nebo","Mount Carmel","Horeb, the mountain of God","Mount Moriah",2],
+ ["EXO-000007","EXO",3,4,4,"How did Moses reply when God called to him from the burning bush?","Speak, LORD","Here I am","What do you want of me?","I am your servant",1],
+ ["EXO-000008","EXO",3,10,11,"What mission did God give Moses?","Build an altar in Midian","Bring the Israelites out of Egypt","Lead the Egyptians into Canaan","Return alone to Mount Horeb",1],
+ ["EXO-000009","EXO",3,13,14,"How did God respond when Moses asked what name he should give the Israelites?","The God of Abraham","The Almighty","I AM WHO I AM","The God of Horeb",2],
+ ["EXO-000010","EXO",4,2,3,"What did God tell Moses to throw on the ground?","His cloak","A stone","His staff","A jar of water",2],
+ ["EXO-000011","EXO",4,3,3,"What did Moses’ staff become when he threw it on the ground at God’s command?","A snake","A flame","A branch","A stream of water",0],
+ ["EXO-000012","EXO",4,10,10,"What concern about speaking did Moses express when God called him?","He was afraid of traveling through the wilderness","He was concerned that he was not an eloquent speaker","He did not know where Egypt was","He wanted to remain a shepherd forever",1],
+ ["EXO-000013","EXO",4,14,16,"Who did God give Moses to help him speak to the people?","Joshua","Jethro","Aaron, his brother","Hur",2],
+ // Full counting reference: Exodus 7-12; the linked passage records the final plague.
+ ["EXO-000014","EXO",12,29,30,"How many plagues did God bring upon Egypt in the account in Exodus 7-12?","Seven","Eight","Ten","Twelve",2],
+ // Supporting reference: Exodus 12:29-30.
+ ["EXO-000015","EXO",12,12,13,"Which plague is associated with the first Passover?","The plague of darkness","The plague of locusts","The plague of the firstborn","The plague of frogs",2],
+ ["EXO-000016","EXO",12,15,20,"What were the Israelites forbidden to eat during the Feast of Unleavened Bread?","Meat","Anything made with yeast","Grain","Bitter herbs",1],
+ ["EXO-000017","EXO",12,17,17,"What festival commemorated the day God brought the Israelites out of Egypt by their divisions?","Festival of Weeks","Festival of Trumpets","Festival of Unleavened Bread","Festival of Tabernacles",2],
+ ["EXO-000018","EXO",13,19,19,"Whose bones did Moses carry with him when the Israelites left Egypt?","Abraham’s","Isaac’s","Jacob’s","Joseph’s",3],
+ ["EXO-000019","EXO",13,21,21,"How did the LORD guide the Israelites through the wilderness by day?","A pillar of cloud","A pillar of fire","An angel with a sword","A great wind",0],
+ ["EXO-000020","EXO",13,21,21,"How did the LORD guide the Israelites through the wilderness by night?","A bright star","A pillar of cloud","A pillar of fire that gave them light","A burning bush",2],
+ // Supporting reference: Numbers 26:59 identifies Miriam as the sister of both Moses and Aaron.
+ ["EXO-000021","EXO",15,20,20,"What was the name of Aaron's sister, the prophetess who led the women with tambourines?","Miriam","Zipporah","Deborah","Dinah",0],
+ ["EXO-000022","EXO",16,13,31,"What was the bread from heaven that the Israelites gathered in the wilderness called?","Quail","Manna","Figs","Barley",1],
+ ["EXO-000023","EXO",16,29,30,"On which day were the Israelites commanded to rest?","The first day","The third day","The sixth day","The seventh day",3],
+ ["EXO-000024","EXO",17,6,6,"What rock did Moses strike to provide water for the Israelites?","The rock at Horeb","The rock at Bethel","The rock at Midian","The rock at Jericho",0],
+ ["EXO-000025","EXO",17,9,12,"Who helped Moses hold up his hands while the Israelites, led by Joshua, fought the Amalekites?","Aaron and Hur","Joshua and Caleb","Jethro and Gershom","Nadab and Abihu",0],
  ['PRO-000001','PRO',3,13,14,'According to Proverbs 3:13–14, what is more valuable than silver and gold?','Strength','Wisdom','Long life','Wealth',1],
  ['ISA-000001','ISA',38,2,5,'Which king prayed to God for his life to be extended and was given fifteen more years?','King David','King Solomon','King Asa','King Hezekiah',3],
  ['MAT-000001','MAT',22,36,38,'What is the greatest and first commandment?','Love the Lord your God with all your heart, soul, and mind','Do not be afraid of evil','Do not commit adultery','Do not murder',0],
@@ -117,7 +181,7 @@ export function ensureContent(path:string, bibleSources:BibleSource[]=[]){
  const curatedQuestion=db.prepare('INSERT OR REPLACE INTO questions VALUES(?,?,?,?,?,?,?,?,?,?,?)');
  const syncQuestions=db.transaction(()=>{db.prepare('DELETE FROM questions').run();QUESTIONS.forEach(question=>curatedQuestion.run(...question))});
  syncQuestions();
- db.prepare('INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)').run('question_bank_version','1.6-personal');
+ db.prepare('INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)').run('question_bank_version','1.11-personal');
  for(const source of bibleSources){
   if(!TRANSLATIONS.some(item=>item.id===source.translationId)||!fs.existsSync(source.file))continue;
   const count=(db.prepare('SELECT COUNT(*) count FROM verses WHERE translation_id=?').get(source.translationId) as {count:number}).count;
