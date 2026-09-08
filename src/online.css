@@ -1214,9 +1214,15 @@
   background: white;
   text-align: left;
 }
-.live-choices button:hover {
+.live-choices button:hover:not(:disabled) {
   border-color: var(--green);
   background: #eef3ed;
+}
+.live-choices button:disabled {
+  cursor: not-allowed;
+  color: var(--ink);
+  background: #f3f1ec;
+  opacity: 1;
 }
 .live-choices b {
   width: 31px;
@@ -1265,6 +1271,20 @@
   padding: 10px;
   border-bottom: 1px solid #ebe5da;
   text-align: left;
+}
+.standing-points {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.standing-points small {
+  color: var(--green);
+  font-size: 13px;
+}
+.mini-standings .standing-points strong {
+  font: inherit;
+  font-weight: 700;
 }
 .game-results > svg {
   width: 65px;
@@ -1365,4 +1385,15 @@
   .online-title {
     gap: 14px;
   }
+}
+.game-friend-invites {
+  margin: 20px 0;
+  padding: 20px;
+  text-align: left;
+}
+.game-friend-invites .friend-list > div {
+  flex-wrap: wrap;
+}
+.game-friend-invites .friend-list > div > div {
+  min-width: 120px;
 }
