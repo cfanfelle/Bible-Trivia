@@ -1,6 +1,6 @@
 {
   "name": "bible-trivia",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "An offline-first Bible trivia desktop application with online community features",
   "author": "Bible Trivia Project",
   "main": "dist-electron/electron/main.js",

@@ -28,6 +28,58 @@ export const AVATARS:[string,string,string,number][]=[
 ];
 
 const QUESTIONS:[string,string,number,number,number,string,string,string,string,string,number][]=[
+ ["ACT-000001","ACT",1,1,2,"Who is traditionally recognized as the author of the book of Acts?","Peter","Paul","Luke","John",2],
+ ["ACT-000002","ACT",1,3,3,"For how many days did Jesus appear to his disciples after his resurrection and give many convincing proofs that he was alive?","7 days","12 days","30 days","40 days",3],
+ ["ACT-000003","ACT",1,6,7,"When the apostles asked Jesus about the time for restoring the kingdom to Israel, who did Jesus say had set the times and dates by his own authority?","The Father","The Son","The apostles","The prophets",0],
+ ["ACT-000004","ACT",2,1,4,"On what day did the Holy Spirit come upon the disciples with a sound like a violent wind and what seemed to be tongues of fire?","Passover","Pentecost","Day of Atonement","Festival of Tabernacles",1],
+ ["ACT-000005","ACT",2,14,21,"Who stood up and addressed the crowd, declaring that everyone who calls on the name of the Lord will be saved?","John","Stephen","Peter","James",2],
+ ["ACT-000006","ACT",4,1,2,"Why were the priests, captain of the temple guard, and Sadducees disturbed by Peter and John?","They were collecting money at the temple","They were teaching the people and proclaiming the resurrection of the dead in Jesus","They refused to enter the temple","They were telling the people to leave Jerusalem",1],
+ ["ACT-000007","ACT",4,36,36,"What name did the apostles give Joseph, a Levite from Cyprus?","Silas","Barnabas","Matthias","Stephen",1],
+ ["ACT-000008","ACT",5,1,10,"What husband and wife died after lying about the money they received from selling property?","Aquila and Priscilla","Felix and Drusilla","Ananias and Sapphira","Herod and Bernice",2],
+ ["ACT-000009","ACT",5,17,20,"Who opened the doors of the public jail and released the apostles during the night?","Peter","A Roman guard","Gamaliel","An angel of the Lord",3],
+ ["ACT-000010","ACT",5,29,29,"Who did Peter and the other apostles say they must obey rather than human beings?","The high priest","God","Caesar","Moses",1],
+ ["ACT-000011","ACT",6,8,15,"Who was full of God’s grace and power and was brought before the Sanhedrin after false witnesses testified against him?","Stephen","Philip","Barnabas","Matthias",0],
+ ["ACT-000012","ACT",7,2,53,"In his defense before the Sanhedrin, whose history did Stephen recount?","The history of the Roman Empire","The history of Israel and its ancestors","The history of the Philistines","The history of the Egyptian pharaohs",1],
+ ["ACT-000013","ACT",7,57,60,"How was Stephen killed?","He was crucified","He was beheaded","He was stoned to death","He was thrown into prison and died there",2],
+ ["ACT-000014","ACT",7,59,59,"What did Stephen pray while he was being stoned?","Father, forgive my sins","Lord Jesus, receive my spirit","LORD, deliver me from my enemies","Father, take me to Abraham",1],
+ ["ACT-000015","ACT",8,1,3,"Who began destroying the church, going from house to house and dragging off men and women to prison?","Herod","Saul","Caiaphas","Cornelius",1],
+ ["ACT-000016","ACT",8,27,28,"Which book of the Bible was the Ethiopian eunuch reading when Philip met him?","Jeremiah","Psalms","Isaiah","Genesis",2],
+ ["ACT-000017","ACT",8,34,35,"When the Ethiopian eunuch asked Philip who Isaiah's passage was speaking about, what did Philip do?","He told him the good news about Jesus","He told him to ask the priests in Jerusalem","He explained that the passage referred to Moses","He told him the passage could not be understood",0],
+ ["ACT-000018","ACT",9,3,4,"What did Jesus ask Saul on the road to Damascus?","Saul, Saul, where are you going?","Saul, Saul, why do you persecute me?","Saul, Saul, do you believe in me?","Saul, Saul, why have you left Jerusalem?",1],
+ ["ACT-000019","ACT",9,6,6,"What did Jesus tell Saul to do on the road to Damascus?","Return immediately to Jerusalem","Go into the wilderness and pray","Get up and go into the city, where he would be told what to do","Find Peter and bring him to Jerusalem",2],
+ ["ACT-000020","ACT",9,9,9,"How long was Saul blind after his encounter with Jesus on the road to Damascus?","One day","Three days","Seven days","Forty days",1],
+ ["ACT-000021","ACT",9,10,18,"Who did the Lord send to Saul so that Saul could regain his sight?","Peter","Philip","Barnabas","Ananias",3],
+ ["ACT-000022","ACT",9,15,16,"What did the Lord tell Ananias about Saul?","Saul would return to his former life in Tarsus","Saul was God’s chosen instrument to proclaim his name to the Gentiles, their kings, and the people of Israel","Saul would become the high priest in Jerusalem","Saul would only preach to the Jewish people",1],
+ ["ACT-000023","ACT",9,32,35,"Who did Peter heal in Lydda after the man had been paralyzed and bedridden for eight years?","Aeneas","Cornelius","Simon","Agabus",0],
+ ["ACT-000024","ACT",9,36,41,"Who did Peter raise from the dead in Joppa?","Lydia, also called Priscilla","Tabitha, also called Dorcas","Sapphira, also called Martha","Rhoda, also called Mary",1],
+ ["ACT-000025","ACT",13,9,9,"What other name was Saul known by?","Silas","Paul","Barnabas","Apollos",1],
+ ["ACT-000026","ACT",22,25,29,"In addition to being Jewish, what citizenship did Paul possess?","Greek citizenship","Egyptian citizenship","Roman citizenship","Syrian citizenship",2],
+ ["ACT-000027","ACT",9,23,25,"How did Saul escape from Damascus when people were plotting to kill him?","He disguised himself as a Roman soldier","His disciples lowered him in a basket through an opening in the city wall","He escaped through the city gates at night","An angel led him out of the city",1],
+ ["ACT-000028","ACT",10,9,35,"What did Peter learn from his vision of the sheet containing various animals?","Only the Israelites could receive salvation","God does not show favoritism but accepts from every nation those who fear him and do what is right","The apostles should stop preaching to Gentiles","Peter should return immediately to Jerusalem",1],
+ ["ACT-000029","ACT",10,42,42,"What did Peter tell Cornelius and those with him that Jesus had commanded the apostles to do?","Build churches throughout Judea","Preach to the people and testify that Jesus is the one appointed by God as judge of the living and the dead","Return to Jerusalem and wait for another sign","Teach only the people of Israel",1],
+ ["ACT-000030","ACT",11,26,26,"Where were the disciples first called Christians?","Jerusalem","Rome","Antioch","Damascus",2],
+ ["ACT-000031","ACT",11,25,26,"Who went to Tarsus to look for Saul and brought him to Antioch?","Peter","Barnabas","James","Silas",1],
+ ["ACT-000032","ACT",12,21,23,"Why was Herod struck down by an angel of the Lord and then eaten by worms?","He imprisoned Peter","He refused to leave Jerusalem","He did not give praise to God","He persecuted Barnabas",2],
+ ["ACT-000033","ACT",13,6,11,"Who did Paul temporarily blind in Paphos after confronting him for opposing the faith?","Simon the Sorcerer","Elymas the sorcerer, also called Bar-Jesus","Sergius Paulus","Alexander the metalworker",1],
+ ["ACT-000034","ACT",13,44,45,"Why did some of the Jewish leaders contradict what Paul was saying and heap abuse on him?","They were afraid of the Romans","They were jealous","They disagreed about where Paul was born","They wanted Paul to leave the synagogue",1],
+ ["ACT-000035","ACT",14,8,13,"In what city did the crowd try to offer sacrifices to Barnabas and Paul, believing they were the gods Zeus and Hermes?","Antioch","Iconium","Lystra","Corinth",2],
+ ["ACT-000036","ACT",15,1,6,"What issue caused a major dispute among the believers and was considered by the apostles and elders in Jerusalem?","Whether Gentile believers had to be circumcised according to the custom taught by Moses in order to be saved","Whether Christians could preach outside Jerusalem","Whether Paul should return to Tarsus","Whether believers were allowed to enter synagogues",0],
+ ["ACT-000037","ACT",15,36,40,"What disagreement caused Paul and Barnabas to separate from each other?","Whether they should return to Jerusalem","Whether they should take John Mark with them on their journey","Whether they should preach to Gentiles","Whether they should travel to Macedonia",1],
+ ["ACT-000038","ACT",16,1,1,"Where did Paul meet Timothy?","Corinth","Ephesus","Lystra","Philippi",2],
+ ["ACT-000039","ACT",16,9,10,"How did Paul know that he and his companions were being called to preach the gospel in Macedonia?","Peter sent him a letter","An angel appeared to Silas","Paul had a vision of a man of Macedonia asking him to come and help them","Timothy received a message from Jerusalem",2],
+ ["ACT-000040","ACT",16,16,24,"What event led to Paul and Silas being seized, beaten, and imprisoned in Philippi?","Paul refused to pay a Roman tax","Paul commanded a spirit of fortune-telling to leave a slave girl, causing her owners to lose their source of income","Paul destroyed a pagan temple","Paul publicly insulted the city officials",1],
+ ["ACT-000041","ACT",17,1,3,"What was Paul's custom when he came to a town with a Jewish synagogue?","He avoided the synagogue and preached only in the marketplace","He entered the synagogue on the Sabbath and reasoned from the Scriptures that Jesus was the Messiah","He waited for the synagogue leaders to invite him to speak","He preached only to Gentiles outside the city",1],
+ ["ACT-000042","ACT",17,13,15,"Where were Paul, Silas, and Timothy when Paul was sent away toward the coast while Silas and Timothy remained behind?","Athens","Thessalonica","Berea","Corinth",2],
+ ["ACT-000043","ACT",18,2,3,"What trade did Paul share with Aquila and Priscilla while staying with them in Corinth?","Fishing","Carpentry","Tentmaking","Metalworking",2],
+ ["ACT-000044","ACT",18,5,5,"Where was Paul when Silas and Timothy rejoined him after coming from Macedonia?","Ephesus","Corinth","Athens","Philippi",1],
+ ["ACT-000045","ACT",18,11,11,"How long did Paul stay in Corinth, teaching the word of God?","Six months","One year","A year and a half","Three years",2],
+ ["ACT-000046","ACT",19,4,4,"John the Baptist's baptism was a baptism of what?","Repentance","Healing","Prophecy","Purification",0],
+ ["ACT-000047","ACT",19,23,28,"What goddess was widely worshiped in Ephesus?","Athena","Hera","Artemis","Aphrodite",2],
+ ["ACT-000048","ACT",20,7,12,"Who fell from a third-story window while Paul was speaking late into the night in Troas?","Tychicus","Eutychus","Aristarchus","Sopater",1],
+ ["ACT-000049","ACT",20,22,24,"What task did Paul say the Lord Jesus had given him, which he was determined to complete despite the prison and hardships awaiting him?","Rebuild the temple in Jerusalem","Testify to the good news of God's grace","Become a teacher in the Jerusalem church","Establish a synagogue in every Roman city",1],
+ ["ACT-000050","ACT",20,35,35,"Who did Paul quote when he said, \"It is more blessed to give than to receive\"?","Moses","David","Peter","The Lord Jesus",3],
+ ["ACT-000051","ACT",21,10,11,"How did the prophet Agabus warn Paul about what would happen to him in Jerusalem?","He broke a staff in front of Paul","He took Paul's belt, bound his own hands and feet, and said the Holy Spirit warned that Paul would be bound in Jerusalem","He wrote Paul a letter telling him not to go","He told Paul about a dream he had in Caesarea",1],
+ ["ACT-000052","ACT",21,17,18,"Who did Paul visit the day after arriving in Jerusalem?","Peter","John","James","Stephen",2],
  ['GEN-000001','GEN',1,9,13,'What did God create on the third day?','The sun and the moon','Land and seas','Birds and fish','Man and animals',1],
  ['GEN-000002','GEN',1,1,5,'What did God create on the first day?','The sky','Light','Land and seas','The sun and moon',1],
  ['GEN-000003','GEN',1,20,23,'What did God create on the fifth day?','Land animals and mankind','Plants and trees','Birds and creatures of the sea','The sun, moon, and stars',2],
@@ -181,7 +233,7 @@ export function ensureContent(path:string, bibleSources:BibleSource[]=[]){
  const curatedQuestion=db.prepare('INSERT OR REPLACE INTO questions VALUES(?,?,?,?,?,?,?,?,?,?,?)');
  const syncQuestions=db.transaction(()=>{db.prepare('DELETE FROM questions').run();QUESTIONS.forEach(question=>curatedQuestion.run(...question))});
  syncQuestions();
- db.prepare('INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)').run('question_bank_version','1.11-personal');
+ db.prepare('INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)').run('question_bank_version','1.12-personal');
  for(const source of bibleSources){
   if(!TRANSLATIONS.some(item=>item.id===source.translationId)||!fs.existsSync(source.file))continue;
   const count=(db.prepare('SELECT COUNT(*) count FROM verses WHERE translation_id=?').get(source.translationId) as {count:number}).count;
