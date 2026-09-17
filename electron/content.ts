@@ -80,6 +80,18 @@ const QUESTIONS:[string,string,number,number,number,string,string,string,string,
  ["ACT-000050","ACT",20,35,35,"Who did Paul quote when he said, \"It is more blessed to give than to receive\"?","Moses","David","Peter","The Lord Jesus",3],
  ["ACT-000051","ACT",21,10,11,"How did the prophet Agabus warn Paul about what would happen to him in Jerusalem?","He broke a staff in front of Paul","He took Paul's belt, bound his own hands and feet, and said the Holy Spirit warned that Paul would be bound in Jerusalem","He wrote Paul a letter telling him not to go","He told Paul about a dream he had in Caesarea",1],
  ["ACT-000052","ACT",21,17,18,"Who did Paul visit the day after arriving in Jerusalem?","Peter","John","James","Stephen",2],
+ ["ACT-000053","ACT",23,11,11,"What did the Lord tell Paul the night after he appeared before the Sanhedrin?","Return to Jerusalem and wait for the apostles","Take courage! As you have testified about me in Jerusalem, so you must also testify in Rome.","Leave Judea and return to Tarsus","Stay in Caesarea until your accusers leave",1],
+ ["ACT-000054","ACT",23,12,13,"How many men joined the conspiracy and took an oath not to eat or drink until they had killed Paul?","Twelve","About twenty","More than forty","Seventy",2],
+ ["ACT-000055","ACT",23,24,24,"Which governor in Caesarea was Paul taken to for his case?","Governor Felix","Governor Festus","Governor Pilate","Governor Quirinius",0],
+ ["ACT-000056","ACT",24,14,14,"What name did Paul use for the way of worship that his accusers called a sect?","The Law","The Assembly","The Tradition","The Way",3],
+ ["ACT-000057","ACT",25,22,24,"Which king did Festus bring Paul before prior to sending him to Rome?","King Herod Antipas","King Agrippa","King Aretas","King Archelaus",1],
+ ["ACT-000058","ACT",27,23,24,"According to the angel's message to Paul, why would Paul survive the voyage to Rome?","He had to return to Jerusalem","He had to build a church on Malta","He had to stand trial before Caesar","He had to meet Peter in Corinth",2],
+ ["ACT-000059","ACT",27,33,33,"How long had the people aboard Paul's ship gone without food when Paul urged them to eat?","Seven days","Ten days","Forty days","Fourteen days",3],
+ ["ACT-000060","ACT",27,37,37,"How many people were aboard the ship carrying Paul toward Rome?","276","120","200","300",0],
+ ["ACT-000061","ACT",28,1,1,"What island did Paul and the others reach safely after the shipwreck?","Crete","Cyprus","Malta","Patmos",2],
+ ["ACT-000062","ACT",28,3,3,"What fastened itself to Paul's hand as he gathered brushwood for the fire on Malta?","A scorpion","A viper","A spider","A lizard",1],
+ // Supporting reference: Isaiah 6:9-10.
+ ["ACT-000063","ACT",28,26,27,"Which Old Testament prophet did Paul quote when speaking to the Jewish leaders in Rome?","Jeremiah","Ezekiel","Daniel","Isaiah",3],
  ['GEN-000001','GEN',1,9,13,'What did God create on the third day?','The sun and the moon','Land and seas','Birds and fish','Man and animals',1],
  ['GEN-000002','GEN',1,1,5,'What did God create on the first day?','The sky','Light','Land and seas','The sun and moon',1],
  ['GEN-000003','GEN',1,20,23,'What did God create on the fifth day?','Land animals and mankind','Plants and trees','Birds and creatures of the sea','The sun, moon, and stars',2],
@@ -162,6 +174,14 @@ const QUESTIONS:[string,string,number,number,number,string,string,string,string,
  ["GEN-000076","GEN",41,45,45,"What was the name of Joseph's wife?","Asenath","Tamar","Zipporah","Dinah",0],
  ["GEN-000077","GEN",42,1,5,"Why did Joseph's brothers travel to Egypt?","To search for Joseph","To buy grain because of the famine","To work for Pharaoh","To escape from their father Jacob",1],
  ["GEN-000078","GEN",42,15,20,"What did Joseph require his brothers to do to prove they were not spies?","Bring their youngest brother, Benjamin, to Egypt","Bring their father, Jacob, to Egypt","Return all the grain they had purchased","Work for Pharaoh for one year",0],
+ ["GEN-000079","GEN",44,1,17,"Why did Joseph have his silver cup placed in Benjamin’s sack?","To test his brothers and see how they would respond when Benjamin was threatened","To secretly give Benjamin a valuable gift","To prevent Benjamin from returning to Canaan","To make his brothers repay the grain they had received",0],
+ ["GEN-000080","GEN",47,13,26,"How did Pharaoh come into possession of nearly all the land of Egypt during the famine?","Joseph bought the Egyptians’ land for Pharaoh in exchange for food after their money and livestock were gone","Pharaoh conquered the land from neighboring kingdoms","The Egyptians voluntarily gave Pharaoh their land before the famine began","Joseph seized the land from the Egyptians without giving them anything in return",0],
+ ["GEN-000081","GEN",35,19,19,"What city was also known as Ephrath?","Hebron","Bethlehem","Bethel","Beersheba",1],
+ ["GEN-000082","GEN",48,5,5,"Which two of Joseph’s sons did Jacob count as his own sons?","Ephraim and Manasseh","Gershom and Ephraim","Reuben and Simeon","Perez and Zerah",0],
+ ["GEN-000083","GEN",49,9,9,"What animal is Judah compared to in Jacob's blessing?","A wolf","A deer","A lion","A donkey",2],
+ ["GEN-000084","GEN",49,10,10,"According to Jacob's blessing over Judah, the scepter will not depart from Judah until whom does it come to?","The one to whom it belongs","The firstborn son of Joseph","The king of Egypt","The priest of Midian",0],
+ ["GEN-000085","GEN",49,16,17,"What animal is Dan compared to in Jacob's blessing?","A lion crouching over its prey","A wolf dividing the plunder","A doe bearing beautiful fawns","A snake by the roadside, a viper along the path",3],
+ ["GEN-000086","GEN",50,26,26,"How old was Joseph when he died?","100 years old","110 years old","120 years old","147 years old",1],
  ["EXO-000001","EXO",2,10,10,"What explanation did Pharaoh's daughter give for naming the child Moses?","I drew him out of the water","God has heard my cry","A stranger in a foreign land","The LORD has delivered me",0],
  ["EXO-000002","EXO",2,15,15,"Where did Moses flee when Pharaoh tried to kill him?","Canaan","Midian","Moab","Goshen",1],
  ["EXO-000003","EXO",2,21,21,"What was the name of Moses’ wife?","Miriam","Zipporah","Rebekah","Asenath",1],
@@ -233,7 +253,7 @@ export function ensureContent(path:string, bibleSources:BibleSource[]=[]){
  const curatedQuestion=db.prepare('INSERT OR REPLACE INTO questions VALUES(?,?,?,?,?,?,?,?,?,?,?)');
  const syncQuestions=db.transaction(()=>{db.prepare('DELETE FROM questions').run();QUESTIONS.forEach(question=>curatedQuestion.run(...question))});
  syncQuestions();
- db.prepare('INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)').run('question_bank_version','1.12-personal');
+ db.prepare('INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)').run('question_bank_version','1.13-personal');
  for(const source of bibleSources){
   if(!TRANSLATIONS.some(item=>item.id===source.translationId)||!fs.existsSync(source.file))continue;
   const count=(db.prepare('SELECT COUNT(*) count FROM verses WHERE translation_id=?').get(source.translationId) as {count:number}).count;

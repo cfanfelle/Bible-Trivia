@@ -8,9 +8,9 @@ import Database from './db.js';
 describe('content database seeding', () => {
   it('creates the curated question bank with the reviewed Genesis, Exodus, and Acts questions', () => {
     const db = ensureContent(':memory:');
-    expect((db.prepare('SELECT COUNT(*) count FROM questions').get() as {count:number}).count).toBe(159);
-    expect((db.prepare("SELECT COUNT(*) count FROM questions WHERE book_id='GEN'").get() as {count:number}).count).toBe(77);
-    expect((db.prepare("SELECT COUNT(*) count FROM questions WHERE book_id<>'GEN'").get() as {count:number}).count).toBe(82);
+    expect((db.prepare('SELECT COUNT(*) count FROM questions').get() as {count:number}).count).toBe(178);
+    expect((db.prepare("SELECT COUNT(*) count FROM questions WHERE book_id='GEN'").get() as {count:number}).count).toBe(85);
+    expect((db.prepare("SELECT COUNT(*) count FROM questions WHERE book_id<>'GEN'").get() as {count:number}).count).toBe(93);
     expect((db.prepare("SELECT answer_b,correct_index FROM questions WHERE id='GEN-000001'").get() as {answer_b:string;correct_index:number})).toEqual({answer_b:'Land and seas',correct_index:1});
     expect((db.prepare("SELECT answer_b,correct_index FROM questions WHERE id='GEN-000021'").get() as {answer_b:string;correct_index:number})).toEqual({answer_b:'An olive leaf',correct_index:1});
     expect((db.prepare("SELECT answer_c,correct_index FROM questions WHERE id='GEN-000035'").get() as {answer_c:string;correct_index:number})).toEqual({answer_c:'Abraham was 99 and Ishmael was 13',correct_index:2});
