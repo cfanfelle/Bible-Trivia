@@ -16,4 +16,28 @@ describe('user database migrations',()=>{
   expect(db.prepare('SELECT color,book_id bookId,chapter FROM chapter_bookmarks').all()).toEqual([{color:'red',bookId:'JHN',chapter:3}]);
   db.close();
  });
+ it('creates crossword and verse trainer tables in the user database',()=>{
+  const db=new Database(':memory:');
+  userMigrations.forEach(sql=>db.exec(sql));
+  const tables=(db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as unknown as {name:string}[]).map(t=>t.name);
+  // Crossword tables
+  expect(tables).toContain('crossword_boards');
+  expect(tables).toContain('crossword_history');
+  expect(tables).toContain('crossword_book_stats');
+  expect(tables).toContain('daily_crossword');
+  // Verse trainer tables
+  expect(tables).toContain('memory_verses');
+  expect(tables).toContain('memory_training');
+  expect(tables).toContain('memory_reviews');
+  // Verify memory_training FK cascade setup works
+  const profile=Number(db.prepare("INSERT INTO profiles(name,avatar_id,created_at) VALUES('Test','lamb','now')").run().lastInsertRowid);
+  const verseId=Number(db.prepare("INSERT INTO memory_verses(profile_id,reference,master_text,created_at,updated_at) VALUES(?,?,'John 3:16 text','now','now')").run(profile,'John 3:16').lastInsertRowid);
+  db.prepare('INSERT INTO memory_training(verse_id) VALUES(?)').run(verseId);
+  db.prepare('INSERT INTO memory_reviews(verse_id) VALUES(?)').run(verseId);
+  expect((db.prepare('SELECT COUNT(*) count FROM memory_training WHERE verse_id=?').get(verseId) as {count:number}).count).toBe(1);
+  db.prepare('DELETE FROM memory_verses WHERE id=?').run(verseId);
+  expect((db.prepare('SELECT COUNT(*) count FROM memory_training WHERE verse_id=?').get(verseId) as {count:number}).count).toBe(0);
+  db.close();
+ });
 });
+

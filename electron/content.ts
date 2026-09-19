@@ -240,6 +240,9 @@ export function ensureContent(path:string, bibleSources:BibleSource[]=[]){
   })();
  }
  db.exec('CREATE TABLE IF NOT EXISTS translations(id TEXT PRIMARY KEY,name TEXT NOT NULL,abbreviation TEXT NOT NULL,description TEXT NOT NULL,license TEXT NOT NULL,sort_order INTEGER NOT NULL UNIQUE)');
+ db.exec('CREATE TABLE IF NOT EXISTS crossword_clues(id TEXT PRIMARY KEY,book_id TEXT NOT NULL,chapter INTEGER NOT NULL,verse_start INTEGER NOT NULL,verse_end INTEGER NOT NULL,clue_text TEXT NOT NULL,answer TEXT NOT NULL,answer_normalized TEXT NOT NULL,reference TEXT NOT NULL,enabled INTEGER NOT NULL DEFAULT 1)');
+ db.exec('CREATE INDEX IF NOT EXISTS idx_cw_clues_book ON crossword_clues(book_id,enabled)');
+
  const saveTranslation=db.prepare('INSERT OR REPLACE INTO translations VALUES(?,?,?,?,?,?)');
  TRANSLATIONS.forEach(item=>saveTranslation.run(item.id,item.name,item.abbreviation,item.description,item.license,item.sortOrder));
  const saveAvatar=db.prepare('INSERT OR REPLACE INTO animals VALUES(?,?,?,?,?)');

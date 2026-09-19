@@ -33,6 +33,66 @@ chapter INTEGER NOT NULL,
 updated_at TEXT NOT NULL,
 PRIMARY KEY(profile_id,color),
 FOREIGN KEY(profile_id) REFERENCES profiles(id) ON DELETE CASCADE);`
+,`CREATE TABLE crossword_boards(
+profile_id INTEGER NOT NULL,
+book_id TEXT NOT NULL,
+clue_ids TEXT NOT NULL,
+grid_data TEXT NOT NULL,
+letter_state TEXT NOT NULL DEFAULT '{}',
+solved_word_numbers TEXT NOT NULL DEFAULT '[]',
+xp_awarded INTEGER NOT NULL DEFAULT 0,
+created_at TEXT NOT NULL,
+PRIMARY KEY(profile_id,book_id),
+FOREIGN KEY(profile_id) REFERENCES profiles(id) ON DELETE CASCADE);
+CREATE TABLE crossword_history(
+profile_id INTEGER NOT NULL,
+clue_id TEXT NOT NULL,
+solved_at TEXT NOT NULL,
+PRIMARY KEY(profile_id,clue_id),
+FOREIGN KEY(profile_id) REFERENCES profiles(id) ON DELETE CASCADE);
+CREATE TABLE crossword_book_stats(
+profile_id INTEGER NOT NULL,
+book_id TEXT NOT NULL,
+boards_completed INTEGER NOT NULL DEFAULT 0,
+PRIMARY KEY(profile_id,book_id),
+FOREIGN KEY(profile_id) REFERENCES profiles(id) ON DELETE CASCADE);`
+,`CREATE TABLE daily_crossword(
+profile_id INTEGER NOT NULL,
+local_date TEXT NOT NULL,
+clue_ids TEXT NOT NULL,
+grid_data TEXT NOT NULL,
+letter_state TEXT NOT NULL DEFAULT '{}',
+solved_word_numbers TEXT NOT NULL DEFAULT '[]',
+completed INTEGER NOT NULL DEFAULT 0,
+xp_awarded INTEGER NOT NULL DEFAULT 0,
+PRIMARY KEY(profile_id,local_date),
+FOREIGN KEY(profile_id) REFERENCES profiles(id) ON DELETE CASCADE);`
+,`CREATE TABLE memory_verses(
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+profile_id INTEGER NOT NULL,
+reference TEXT NOT NULL,
+translation TEXT,
+master_text TEXT NOT NULL,
+created_at TEXT NOT NULL,
+updated_at TEXT NOT NULL,
+FOREIGN KEY(profile_id) REFERENCES profiles(id) ON DELETE CASCADE);
+CREATE TABLE memory_training(
+verse_id INTEGER PRIMARY KEY,
+difficulty_level INTEGER NOT NULL DEFAULT 1,
+chunks TEXT NOT NULL DEFAULT '[]',
+current_chunk_index INTEGER NOT NULL DEFAULT 0,
+weak_words TEXT NOT NULL DEFAULT '[]',
+performance_log TEXT NOT NULL DEFAULT '[]',
+FOREIGN KEY(verse_id) REFERENCES memory_verses(id) ON DELETE CASCADE);
+CREATE TABLE memory_reviews(
+verse_id INTEGER PRIMARY KEY,
+mastery TEXT NOT NULL DEFAULT 'learning',
+next_review_date TEXT,
+last_reviewed TEXT,
+review_interval_days INTEGER NOT NULL DEFAULT 0,
+successful_reviews INTEGER NOT NULL DEFAULT 0,
+total_reviews INTEGER NOT NULL DEFAULT 0,
+FOREIGN KEY(verse_id) REFERENCES memory_verses(id) ON DELETE CASCADE);`
 ];
 
 export const contentSchema=`CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL);
@@ -41,4 +101,6 @@ CREATE TABLE translations(id TEXT PRIMARY KEY,name TEXT NOT NULL,abbreviation TE
 CREATE TABLE verses(translation_id TEXT NOT NULL,book_id TEXT NOT NULL,chapter INTEGER NOT NULL,verse INTEGER NOT NULL,text TEXT NOT NULL,PRIMARY KEY(translation_id,book_id,chapter,verse));
 CREATE INDEX idx_verses_location ON verses(translation_id,book_id,chapter,verse);
 CREATE TABLE questions(id TEXT PRIMARY KEY,book_id TEXT NOT NULL,chapter INTEGER NOT NULL,verse_start INTEGER NOT NULL,verse_end INTEGER NOT NULL,question_text TEXT NOT NULL,answer_a TEXT NOT NULL,answer_b TEXT NOT NULL,answer_c TEXT NOT NULL,answer_d TEXT NOT NULL,correct_index INTEGER NOT NULL CHECK(correct_index BETWEEN 0 AND 3));
-CREATE TABLE animals(id TEXT PRIMARY KEY,name TEXT NOT NULL,emoji TEXT NOT NULL,unlock_level INTEGER NOT NULL,sort_order INTEGER NOT NULL);`;
+CREATE TABLE animals(id TEXT PRIMARY KEY,name TEXT NOT NULL,emoji TEXT NOT NULL,unlock_level INTEGER NOT NULL,sort_order INTEGER NOT NULL);
+CREATE TABLE crossword_clues(id TEXT PRIMARY KEY,book_id TEXT NOT NULL,chapter INTEGER NOT NULL,verse_start INTEGER NOT NULL,verse_end INTEGER NOT NULL,clue_text TEXT NOT NULL,answer TEXT NOT NULL,answer_normalized TEXT NOT NULL,reference TEXT NOT NULL,enabled INTEGER NOT NULL DEFAULT 1);
+CREATE INDEX IF NOT EXISTS idx_cw_clues_book ON crossword_clues(book_id,enabled);`;

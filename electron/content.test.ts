@@ -75,4 +75,12 @@ describe('content database seeding', () => {
     upgraded.close();
     fs.rmSync(directory,{recursive:true,force:true});
   });
+  it('creates crossword_clues table with zero rows (never auto-populated)', () => {
+    const db = ensureContent(':memory:');
+    const tableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='crossword_clues'").get();
+    expect(tableExists).toBeTruthy();
+    const count = (db.prepare('SELECT COUNT(*) count FROM crossword_clues').get() as {count:number}).count;
+    expect(count).toBe(0);
+    db.close();
+  });
 });

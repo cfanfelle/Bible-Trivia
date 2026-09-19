@@ -13,6 +13,8 @@ import {
   XCircle,
   X,
   Users,
+  Grid3X3,
+  Brain,
 } from "lucide-react";
 import type {
   Bootstrap,
@@ -24,11 +26,16 @@ import type {
 } from "../shared/types";
 import Reader from "./Reader";
 import Online from "./OnlineLive";
+import CrosswordHub from "./Crossword";
+import VerseTrainerHub from "./VerseTrainer";
 import "./styles.css";
 import "./avatar.css";
 import "./session-exit.css";
 import "./logo.css";
 import "./update-status.css";
+import "./crossword.css";
+import "./trainer.css";
+
 const api = <T,>(c: string, p?: unknown) => window.selah.invoke<T>(c, p);
 const medal = (p: number): Medal =>
   p >= 100
@@ -44,11 +51,13 @@ function App() {
   const [boot, setBoot] = useState<Bootstrap | null>(null),
     [page, setPage] = useState("home"),
     [session, setSession] = useState<QuizState | null>(null),
-    [passage, setPassage] = useState(false);
+    [passage, setPassage] = useState(false),
+    [dueCount, setDueCount] = useState(0);
   const refresh = () => api<Bootstrap>("bootstrap").then(setBoot);
   useEffect(() => {
     refresh();
     api<QuizState | null>("session:active").then(setSession);
+    api<number>("memory:due-count").then(setDueCount).catch(() => {});
     const f = () => window.selah.activity();
     for (const e of ["pointerdown", "keydown", "wheel"])
       window.addEventListener(e, f);
@@ -65,6 +74,8 @@ function App() {
     ["home", "Home", Home],
     ["quizzes", "Full Quizzes", Trophy],
     ["practice", "Practice", Dumbbell],
+    ["crosswords", "Crosswords", Grid3X3],
+    ["memorize", "Memorize", Brain],
     ["bible", "Bible", BookOpen],
     ["online", "Online", Users],
     ["medals", "Medals", Trophy],
@@ -113,6 +124,9 @@ function App() {
             >
               <I size={18} />
               {label}
+              {id === "memorize" && dueCount > 0 && (
+                <span className="due-badge">{dueCount}</span>
+              )}
             </button>
           ))}
         </nav>
@@ -142,11 +156,16 @@ function App() {
             session={session}
             setPage={setPage}
             setSession={setSession}
+            dueCount={dueCount}
           />
         ) : page === "quizzes" ? (
           <Chooser boot={boot} mode="full" setSession={setSession} />
         ) : page === "practice" ? (
           <Chooser boot={boot} mode="practice" setSession={setSession} />
+        ) : page === "crosswords" ? (
+          <CrosswordHub books={boot.books} />
+        ) : page === "memorize" ? (
+          <VerseTrainerHub dueCount={dueCount} onDueCountChange={setDueCount} />
         ) : page === "bible" ? (
           <Reader books={boot.books} />
         ) : page === "online" ? (
@@ -248,12 +267,14 @@ function Dashboard({
   session,
   setPage,
   setSession,
+  dueCount,
 }: {
   p: Profile;
   boot: Bootstrap;
   session: QuizState | null;
   setPage: (x: string) => void;
   setSession: (s: QuizState) => void;
+  dueCount: number;
 }) {
   const l = levelAt(p.xp);
   return (
@@ -292,7 +313,7 @@ function Dashboard({
               )
             }
           >
-            Answer today’s question
+            Answer today's question
           </button>
         </div>
         <div className="stat card">
@@ -322,6 +343,24 @@ function Dashboard({
               onClick={() => setSession({ ...session })}
             >
               Continue
+            </button>
+          </div>
+        )}
+        <div className="continue card">
+          <span className="eyebrow">CROSSWORD OF THE DAY</span>
+          <h3>Today's Bible Crossword</h3>
+          <p>Fill-in-the-blank Bible crossword. Earns bonus XP when completed.</p>
+          <button className="secondary" onClick={() => setPage("crosswords")}>
+            Open Crossword
+          </button>
+        </div>
+        {dueCount > 0 && (
+          <div className="continue card" style={{ borderLeft: '3px solid #b65f39' }}>
+            <span className="eyebrow">MEMORY REVIEW</span>
+            <h3>{dueCount} verse{dueCount > 1 ? 's' : ''} due for review</h3>
+            <p>Keep long-term recall strong with today's scheduled reviews.</p>
+            <button className="secondary" onClick={() => setPage("memorize")}>
+              Review Now
             </button>
           </div>
         )}

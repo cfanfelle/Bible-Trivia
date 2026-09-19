@@ -1,0 +1,90 @@
+/* ─── Verse Trainer ──────────────────────────────────────────────────────── */
+
+.trainer-hub { max-width: 900px; margin: auto; }
+.trainer-hub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+@media(max-width: 700px) { .trainer-hub-grid { grid-template-columns: 1fr; } }
+
+/* Mastery badge */
+.mastery-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+.mastery-badge.learning { background: #f0ede4; color: #7a817d; }
+.mastery-badge.bronze  { background: #f5e8d8; color: #a86f48; }
+.mastery-badge.silver  { background: #efefef; color: #777; }
+.mastery-badge.gold    { background: #fdf5d8; color: #c69538; }
+.mastery-badge.diamond { background: #d8ecf5; color: #447a99; }
+
+/* Memory library */
+.memory-list { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.memory-item { background: var(--paper); border: 1px solid #ded8cb; border-radius: 14px; padding: 18px 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.memory-item-info { flex: 1; min-width: 0; }
+.memory-item-info h3 { margin: 0 0 4px; font-size: 17px; }
+.memory-item-info p { margin: 0; font-size: 13px; color: #788079; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memory-item-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.memory-item-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.memory-item-actions button { padding: 7px 13px; border-radius: 8px; border: 1px solid #ddd6c8; background: white; font-size: 13px; font-weight: 600; color: var(--green); cursor: pointer; }
+.memory-item-actions button:hover { background: #edf2eb; }
+.memory-item-actions .delete-btn { color: #a75b53; }
+.memory-item-actions .delete-btn:hover { background: #f7e7e5; }
+
+/* Due count badge */
+.due-badge { background: #b65f39; color: white; border-radius: 10px; font-size: 11px; font-weight: 700; padding: 2px 7px; margin-left: 6px; }
+
+/* Add verse form */
+.add-verse-form { max-width: 640px; margin-top: 28px; }
+.add-verse-form label { display: grid; gap: 6px; margin-bottom: 16px; font-weight: 600; }
+.add-verse-form input, .add-verse-form textarea, .add-verse-form select {
+  padding: 11px 14px; border: 1px solid #d8d1c3; border-radius: 10px; background: white; font: inherit; width: 100%;
+}
+.add-verse-form textarea { resize: vertical; min-height: 130px; line-height: 1.6; font-family: Georgia, serif; }
+.add-verse-ref-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width: 500px) { .add-verse-ref-row { grid-template-columns: 1fr; } }
+.master-text-hint { font-size: 12px; color: #7a817d; font-weight: normal; margin-top: 2px; }
+
+/* Training session */
+.training-session { max-width: 700px; margin: auto; }
+.training-session .level-tag { display: inline-block; background: #e9eee7; color: var(--green); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; }
+.training-session .verse-ref { font-size: 15px; color: #9a7750; margin-bottom: 8px; }
+.training-session .master-display { font: 22px/1.8 Georgia, serif; background: var(--paper); border: 1px solid #ded8cb; border-radius: 14px; padding: 28px 32px; margin: 18px 0; }
+.blanked-text { font: 20px/1.9 Georgia, serif; background: var(--paper); border: 1px solid #ded8cb; border-radius: 14px; padding: 24px 28px; }
+.blank-word { display: inline-block; min-width: 70px; border-bottom: 2px solid var(--green); margin: 0 3px; text-align: center; }
+.blank-input { border: none; border-bottom: 2px solid var(--green); background: none; font: 20px/1.9 Georgia, serif; width: 90px; padding: 0 2px; outline: none; color: var(--green); text-align: center; }
+.blank-input:focus { border-bottom-color: #c69b49; }
+
+/* Word bank */
+.word-bank { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.word-chip { padding: 7px 14px; border: 1px solid #d0cec6; border-radius: 20px; background: white; cursor: pointer; font-size: 15px; font-family: Georgia, serif; }
+.word-chip:hover { border-color: var(--green); background: #edf2eb; }
+.word-chip.used { opacity: .4; pointer-events: none; }
+
+/* First-letter hints */
+.first-letter-display { font: 22px/1.9 'Courier New', monospace; background: var(--paper); border: 1px solid #ded8cb; border-radius: 14px; padding: 28px 32px; letter-spacing: 2px; color: #455e52; }
+
+/* Recall input */
+.recall-prompt { color: #9a7750; font-size: 15px; margin-bottom: 14px; }
+.recall-textarea { width: 100%; min-height: 130px; resize: vertical; padding: 16px; border: 1px solid #d8d1c3; border-radius: 12px; font: 19px/1.7 Georgia, serif; background: white; }
+.recall-textarea:focus { outline: none; border-color: var(--green); }
+
+/* Diff result */
+.diff-result { margin-top: 18px; background: var(--paper); border: 1px solid #ded8cb; border-radius: 14px; padding: 20px 24px; }
+.diff-result h3 { margin: 0 0 12px; }
+.diff-word { display: inline; }
+.diff-word.correct { color: #315d4c; }
+.diff-word.typo { color: #c69b49; text-decoration: underline wavy; }
+.diff-word.wrong { color: #a75b53; text-decoration: line-through; }
+.diff-word.missing { color: #a75b53; opacity: .5; }
+.diff-word.extra { color: #888; text-decoration: line-through; }
+.diff-master { font: 17px/1.8 Georgia, serif; }
+.diff-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; font-size: 12px; }
+.diff-tag { padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+.diff-tag.passed { background: #d8f0e3; color: #315d4c; }
+.diff-tag.failed { background: #f7e7e5; color: #a75b53; }
+
+/* Review session */
+.review-session { max-width: 700px; margin: auto; }
+.review-queue { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+.review-queue-item { background: var(--paper); border: 1px solid #ded8cb; border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.review-queue-item h3 { margin: 0; font-size: 17px; }
+.review-queue-item small { color: #788079; }
+
+/* Progress bar for trainer */
+.trainer-progress { margin-bottom: 18px; }
+.trainer-progress-row { display: flex; justify-content: space-between; font-size: 13px; color: #788079; margin-bottom: 5px; }
