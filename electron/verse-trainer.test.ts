@@ -168,6 +168,10 @@ describe('adaptLevel', () => {
     expect(adaptLevel(3, [{ level: 3, score: 1, timestamp: 0, passed: true }])).toBe(3);
   });
 
+  it('advances from study level 1 to level 2 upon completing study', () => {
+    expect(adaptLevel(1, [{ level: 1, score: 1, timestamp: 0, passed: true }])).toBe(2);
+  });
+
   it('levels up after 2 consecutive passes', () => {
     const log: PerformanceEntry[] = [
       { level: 3, score: 0.9, timestamp: 0, passed: true },

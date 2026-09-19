@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'; import { ensureContent } from './conte
 import { readChapter, searchVerses } from './bible.js';
 import { generateCrossword, selectClues, selectDailyClues, normalizeCrosswordAnswer } from './crossword.js';
 import type { ClueRecord } from './crossword.js';
-import { chunkText, compareAttempt, generateExercise, adaptLevel, updateWeakWords, scheduleNextReview, computeMastery, normalizeForComparison } from './verse-trainer.js';
+import { chunkText, compareAttempt, generateExercise, adaptLevel, updateWeakWords, scheduleNextReview, computeMastery, normalizeForComparison, tokenize } from './verse-trainer.js';
 import type { WeakWord, PerformanceEntry } from './verse-trainer.js';
 import electronUpdater from 'electron-updater';
 const { autoUpdater } = electronUpdater;
@@ -375,7 +375,21 @@ function registerVerseTrainer(){
   else if(level===7){expectedText=(currentChunk>0?[chunks[currentChunk-1],chunks[currentChunk]]:[chunks[0]]).filter(Boolean).map((c:any)=>c.text).join(' ');}
   else{expectedText=v.master_text;}
   const attempt=String(p.attempt??'');
-  const result=compareAttempt(expectedText,attempt);
+  let result;
+  if(level<=1){
+   result={
+    score:1,
+    correct:tokenize(normalizeForComparison(expectedText)),
+    typos:[],
+    missing:[],
+    wrong:[],
+    extra:[],
+    reordered:false,
+    passed:true,
+   };
+  }else{
+   result=compareAttempt(expectedText,attempt);
+  }
   const log:PerformanceEntry[]=JSON.parse(fresh.performance_log??'[]');
   log.push({level,score:result.score,timestamp:Date.now(),passed:result.passed});
   // Keep log manageable

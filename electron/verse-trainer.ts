@@ -469,6 +469,12 @@ export function adaptLevel(
   recentLog: PerformanceEntry[],
   maxLevel = 8,
 ): number {
+  if (currentLevel <= 1) {
+    const last = recentLog[recentLog.length - 1];
+    if (last && last.passed) return 2;
+    return 1;
+  }
+
   // Consider only last 5 attempts
   const recent = recentLog.slice(-5);
   if (recent.length < 2) return currentLevel;

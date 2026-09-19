@@ -298,10 +298,17 @@ function TrainingSession({ verse, onBack, onRefreshVerse }: {
           return w;
         }).join(' ');
       }
+      if (exData.exercise.type === 'study' || level === 1) {
+        finalAttempt = exData.exercise.displayText;
+      }
       const res = await api<{ result: AttemptResult; newLevel: number; passed: boolean }>('memory:submit', {
         id: verse.id,
         attempt: finalAttempt,
       });
+      if (exData.exercise.type === 'study' || level === 1) {
+        await loadExercise();
+        return;
+      }
       setResult(res.result);
       setNewLevel(res.newLevel);
     } finally {
