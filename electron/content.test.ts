@@ -75,12 +75,19 @@ describe('content database seeding', () => {
     upgraded.close();
     fs.rmSync(directory,{recursive:true,force:true});
   });
-  it('creates crossword_clues table with zero rows (never auto-populated)', () => {
+  it('seeds the approved crossword clues bank with Genesis, Exodus, and Acts clues', () => {
     const db = ensureContent(':memory:');
-    const tableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='crossword_clues'").get();
-    expect(tableExists).toBeTruthy();
-    const count = (db.prepare('SELECT COUNT(*) count FROM crossword_clues').get() as {count:number}).count;
-    expect(count).toBe(0);
+    const totalCount = (db.prepare('SELECT COUNT(*) count FROM crossword_clues').get() as {count:number}).count;
+    expect(totalCount).toBe(75);
+    const genCount = (db.prepare("SELECT COUNT(*) count FROM crossword_clues WHERE book_id='GEN'").get() as {count:number}).count;
+    expect(genCount).toBe(25);
+    const exoCount = (db.prepare("SELECT COUNT(*) count FROM crossword_clues WHERE book_id='EXO'").get() as {count:number}).count;
+    expect(exoCount).toBe(21);
+    const actCount = (db.prepare("SELECT COUNT(*) count FROM crossword_clues WHERE book_id='ACT'").get() as {count:number}).count;
+    expect(actCount).toBe(29);
+    expect(db.prepare("SELECT answer,reference FROM crossword_clues WHERE id='CROSS-GEN-000001'").get()).toEqual({answer:'EDEN',reference:'Genesis 2:8'});
+    expect(db.prepare("SELECT answer,reference FROM crossword_clues WHERE id='CROSS-EXO-000001'").get()).toEqual({answer:'MOSES',reference:'Exodus 2:10'});
+    expect(db.prepare("SELECT answer,reference FROM crossword_clues WHERE id='CROSS-ACT-000001'").get()).toEqual({answer:'MATTHIAS',reference:'Acts 1:26'});
     db.close();
   });
 });

@@ -217,6 +217,89 @@ const QUESTIONS:[string,string,number,number,number,string,string,string,string,
  ['NUM-000001','NUM',12,7,8,'With whom did God say He spoke face-to-face, clearly and not in riddles?','Joshua','Jeremiah','Isaiah','Moses',3]
 ];
 
+export const CROSSWORD_CLUES:[string,string,number,number,number,string,string,string,string,number][]=[
+ // Genesis (25 clues)
+ ['CROSS-GEN-000001','GEN',2,8,8,'Adam and Eve lived in the Garden of _____.','EDEN','EDEN','Genesis 2:8',1],
+ ['CROSS-GEN-000002','GEN',2,21,22,'God made the woman from one of Adam’s _____.','RIB','RIB','Genesis 2:21–22',1],
+ ['CROSS-GEN-000003','GEN',4,2,2,'Cain’s brother was named _____.','ABEL','ABEL','Genesis 4:2',1],
+ ['CROSS-GEN-000004','GEN',6,14,14,'God commanded Noah to build an _____.','ARK','ARK','Genesis 6:14',1],
+ ['CROSS-GEN-000005','GEN',8,8,8,'Noah sent out a _____ to see if the waters had receded.','DOVE','DOVE','Genesis 8:8',1],
+ ['CROSS-GEN-000006','GEN',11,9,9,'The LORD confused the people’s language at _____.','BABEL','BABEL','Genesis 11:9',1],
+ ['CROSS-GEN-000007','GEN',12,5,5,'Abram’s nephew was named _____.','LOT','LOT','Genesis 12:5',1],
+ ['CROSS-GEN-000008','GEN',16,1,1,'Sarah’s Egyptian slave was named _____.','HAGAR','HAGAR','Genesis 16:1',1],
+ ['CROSS-GEN-000009','GEN',21,3,3,'Abraham and Sarah named their promised son _____.','ISAAC','ISAAC','Genesis 21:3',1],
+ ['CROSS-GEN-000010','GEN',22,13,13,'Abraham sacrificed a _____ instead of Isaac.','RAM','RAM','Genesis 22:13',1],
+ ['CROSS-GEN-000011','GEN',24,67,67,'Isaac married _____.','REBEKAH','REBEKAH','Genesis 24:67',1],
+ ['CROSS-GEN-000012','GEN',25,24,26,'Jacob’s twin brother was _____.','ESAU','ESAU','Genesis 25:24–26',1],
+ ['CROSS-GEN-000013','GEN',28,12,12,'Jacob dreamed of a _____ reaching from earth to heaven.','LADDER','LADDER','Genesis 28:12',1],
+ ['CROSS-GEN-000014','GEN',29,23,25,'Laban gave Jacob _____ instead of Rachel first.','LEAH','LEAH','Genesis 29:23–25',1],
+ ['CROSS-GEN-000015','GEN',37,3,3,'Jacob gave an ornate robe to his son _____.','JOSEPH','JOSEPH','Genesis 37:3',1],
+ ['CROSS-GEN-000016','GEN',39,1,1,'Joseph was sold in Egypt to _____.','POTIPHAR','POTIPHAR','Genesis 39:1',1],
+ ['CROSS-GEN-000017','GEN',41,15,16,'Joseph interpreted the dreams of _____.','PHARAOH','PHARAOH','Genesis 41:15–16',1],
+ ['CROSS-GEN-000018','GEN',41,29,30,'Seven years of abundance were followed by seven years of _____.','FAMINE','FAMINE','Genesis 41:29–30',1],
+ ['CROSS-GEN-000019','GEN',42,20,20,'Joseph demanded that his brothers bring _____ to Egypt.','BENJAMIN','BENJAMIN','Genesis 42:20',1],
+ ['CROSS-GEN-000020','GEN',49,9,9,'Jacob compared Judah to a _____.','LION','LION','Genesis 49:9',1],
+ ['CROSS-GEN-000021','GEN',1,1,1,'“In the _____ God created the heavens and the earth.”','BEGINNING','BEGINNING','Genesis 1:1',1],
+ ['CROSS-GEN-000022','GEN',1,3,3,'“And God said, ‘Let there be _____,’ and there was _____.”','LIGHT','LIGHT','Genesis 1:3',1],
+ ['CROSS-GEN-000023','GEN',1,31,31,'“God saw all that he had made, and it was very _____.”','GOOD','GOOD','Genesis 1:31',1],
+ ['CROSS-GEN-000024','GEN',4,9,9,'“Am I my _____’s keeper?”','BROTHER','BROTHER','Genesis 4:9',1],
+ ['CROSS-GEN-000025','GEN',22,8,8,'“God himself will _____ the lamb for the burnt offering.”','PROVIDE','PROVIDE','Genesis 22:8',1],
+
+ // Exodus (21 clues)
+ ['CROSS-EXO-000001','EXO',2,10,10,'Pharaoh’s daughter named the child she drew from the water _____.','MOSES','MOSES','Exodus 2:10',1],
+ ['CROSS-EXO-000002','EXO',2,15,15,'Moses fled from Pharaoh and went to live in _____.','MIDIAN','MIDIAN','Exodus 2:15',1],
+ ['CROSS-EXO-000003','EXO',2,21,21,'Moses married _____.','ZIPPORAH','ZIPPORAH','Exodus 2:21',1],
+ ['CROSS-EXO-000004','EXO',2,22,22,'Moses named his son _____.','GERSHOM','GERSHOM','Exodus 2:22',1],
+ ['CROSS-EXO-000005','EXO',3,1,1,'Moses came to the mountain of God called _____.','HOREB','HOREB','Exodus 3:1',1],
+ ['CROSS-EXO-000006','EXO',3,2,2,'God appeared to Moses from within a burning _____.','BUSH','BUSH','Exodus 3:2',1],
+ ['CROSS-EXO-000007','EXO',4,14,16,'God appointed _____ to help Moses speak.','AARON','AARON','Exodus 4:14–16',1],
+ ['CROSS-EXO-000008','EXO',4,2,3,'Moses threw his _____ on the ground and it became a snake.','STAFF','STAFF','Exodus 4:2–3',1],
+ ['CROSS-EXO-000009','EXO',7,20,20,'The water of the Nile was turned into _____.','BLOOD','BLOOD','Exodus 7:20',1],
+ ['CROSS-EXO-000010','EXO',8,6,6,'The second plague filled Egypt with _____.','FROGS','FROGS','Exodus 8:6',1],
+ ['CROSS-EXO-000011','EXO',12,11,11,'The Israelites were commanded to celebrate the _____.','PASSOVER','PASSOVER','Exodus 12:11',1],
+ ['CROSS-EXO-000012','EXO',13,21,21,'By day, the LORD went ahead of Israel in a pillar of _____.','CLOUD','CLOUD','Exodus 13:21',1],
+ ['CROSS-EXO-000013','EXO',15,20,20,'_____ took a timbrel and led the women after crossing the sea.','MIRIAM','MIRIAM','Exodus 15:20',1],
+ ['CROSS-EXO-000014','EXO',16,31,31,'The Israelites called the bread from heaven _____.','MANNA','MANNA','Exodus 16:31',1],
+ ['CROSS-EXO-000015','EXO',17,12,12,'Aaron and _____ held up Moses’ hands.','HUR','HUR','Exodus 17:12',1],
+ ['CROSS-EXO-000016','EXO',3,14,14,'“I _____ WHO I _____.”','AM','AM','Exodus 3:14',1],
+ ['CROSS-EXO-000017','EXO',14,14,14,'“The LORD will _____ for you; you need only to be still.”','FIGHT','FIGHT','Exodus 14:14',1],
+ ['CROSS-EXO-000018','EXO',14,14,14,'“The LORD will fight for you; you need only to be _____.”','STILL','STILL','Exodus 14:14',1],
+ ['CROSS-EXO-000019','EXO',20,3,3,'“You shall have no _____ gods before me.”','OTHER','OTHER','Exodus 20:3',1],
+ ['CROSS-EXO-000020','EXO',20,13,13,'“You shall not _____.”','MURDER','MURDER','Exodus 20:13',1],
+ ['CROSS-EXO-000021','EXO',20,15,15,'“You shall not _____.”','STEAL','STEAL','Exodus 20:15',1],
+
+ // Acts (29 clues)
+ ['CROSS-ACT-000001','ACT',1,26,26,'_____ was chosen to replace Judas.','MATTHIAS','MATTHIAS','Acts 1:26',1],
+ ['CROSS-ACT-000002','ACT',2,1,1,'The disciples were together on the day of _____.','PENTECOST','PENTECOST','Acts 2:1',1],
+ ['CROSS-ACT-000003','ACT',2,3,3,'What seemed to be _____ of fire rested on the believers.','TONGUES','TONGUES','Acts 2:3',1],
+ ['CROSS-ACT-000004','ACT',3,6,6,'_____ told the lame man, “In the name of Jesus Christ of Nazareth, walk.”','PETER','PETER','Acts 3:6',1],
+ ['CROSS-ACT-000005','ACT',4,36,36,'Joseph, a Levite from Cyprus, was called _____ by the apostles.','BARNABAS','BARNABAS','Acts 4:36',1],
+ ['CROSS-ACT-000006','ACT',5,1,1,'Ananias’s wife was named _____.','SAPPHIRA','SAPPHIRA','Acts 5:1',1],
+ ['CROSS-ACT-000007','ACT',7,54,60,'_____ was stoned after addressing the Sanhedrin.','STEPHEN','STEPHEN','Acts 7:54–60',1],
+ ['CROSS-ACT-000008','ACT',9,1,1,'Before being commonly called Paul, he was known as _____.','SAUL','SAUL','Acts 9:1',1],
+ ['CROSS-ACT-000009','ACT',9,3,3,'Saul was traveling to _____ when Jesus appeared to him.','DAMASCUS','DAMASCUS','Acts 9:3',1],
+ ['CROSS-ACT-000010','ACT',9,25,25,'Saul escaped Damascus by being lowered in a _____.','BASKET','BASKET','Acts 9:25',1],
+ ['CROSS-ACT-000011','ACT',9,36,36,'Tabitha was also known as _____.','DORCAS','DORCAS','Acts 9:36',1],
+ ['CROSS-ACT-000012','ACT',10,1,5,'The Roman centurion who sent for Peter was named _____.','CORNELIUS','CORNELIUS','Acts 10:1–5',1],
+ ['CROSS-ACT-000013','ACT',11,26,26,'The disciples were first called _____ at Antioch.','CHRISTIANS','CHRISTIANS','Acts 11:26',1],
+ ['CROSS-ACT-000014','ACT',16,25,25,'Paul and _____ were praying and singing hymns in prison.','SILAS','SILAS','Acts 16:25',1],
+ ['CROSS-ACT-000015','ACT',17,22,23,'Paul spoke about the unknown god while in _____.','ATHENS','ATHENS','Acts 17:22–23',1],
+ ['CROSS-ACT-000016','ACT',18,2,2,'Priscilla’s husband was named _____.','AQUILA','AQUILA','Acts 18:2',1],
+ ['CROSS-ACT-000017','ACT',20,9,9,'_____ fell from a third-story window while Paul was speaking.','EUTYCHUS','EUTYCHUS','Acts 20:9',1],
+ ['CROSS-ACT-000018','ACT',25,11,11,'Paul appealed his case to _____.','CAESAR','CAESAR','Acts 25:11',1],
+ ['CROSS-ACT-000019','ACT',28,1,1,'After the shipwreck, they learned the island was called _____.','MALTA','MALTA','Acts 28:1',1],
+ ['CROSS-ACT-000020','ACT',28,3,3,'A _____ fastened itself on Paul’s hand on Malta.','VIPER','VIPER','Acts 28:3',1],
+ ['CROSS-ACT-000021','ACT',1,8,8,'“You will be my _____ in Jerusalem, and in all Judea and Samaria.”','WITNESSES','WITNESSES','Acts 1:8',1],
+ ['CROSS-ACT-000022','ACT',2,21,21,'“Everyone who calls on the name of the Lord will be _____.”','SAVED','SAVED','Acts 2:21',1],
+ ['CROSS-ACT-000023','ACT',2,38,38,'“_____ and be baptized, every one of you.”','REPENT','REPENT','Acts 2:38',1],
+ ['CROSS-ACT-000024','ACT',3,6,6,'“_____ or gold I do not have, but what I do have I give you.”','SILVER','SILVER','Acts 3:6',1],
+ ['CROSS-ACT-000025','ACT',4,12,12,'“_____ is found in no one else.”','SALVATION','SALVATION','Acts 4:12',1],
+ ['CROSS-ACT-000026','ACT',5,29,29,'“We must _____ God rather than human beings!”','OBEY','OBEY','Acts 5:29',1],
+ ['CROSS-ACT-000027','ACT',16,31,31,'“Believe in the _____ Jesus, and you will be saved.”','LORD','LORD','Acts 16:31',1],
+ ['CROSS-ACT-000028','ACT',17,28,28,'“For in him we live and _____ and have our being.”','MOVE','MOVE','Acts 17:28',1],
+ ['CROSS-ACT-000029','ACT',20,35,35,'“It is more blessed to _____ than to receive.”','GIVE','GIVE','Acts 20:35',1]
+];
+
 export function ensureContent(path:string, bibleSources:BibleSource[]=[]){
  const db=new Database(path); db.pragma('journal_mode = WAL');
  if(!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='metadata'").get()){
@@ -257,6 +340,11 @@ export function ensureContent(path:string, bibleSources:BibleSource[]=[]){
  const syncQuestions=db.transaction(()=>{db.prepare('DELETE FROM questions').run();QUESTIONS.forEach(question=>curatedQuestion.run(...question))});
  syncQuestions();
  db.prepare('INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)').run('question_bank_version','1.13-personal');
+ // The curated crossword clues list is the sole source of approved clues.
+ const curatedClue=db.prepare('INSERT OR REPLACE INTO crossword_clues VALUES(?,?,?,?,?,?,?,?,?,?)');
+ const syncClues=db.transaction(()=>{db.prepare('DELETE FROM crossword_clues').run();CROSSWORD_CLUES.forEach(clue=>curatedClue.run(...clue))});
+ syncClues();
+ db.prepare('INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)').run('crossword_bank_version','1.0-personal');
  for(const source of bibleSources){
   if(!TRANSLATIONS.some(item=>item.id===source.translationId)||!fs.existsSync(source.file))continue;
   const count=(db.prepare('SELECT COUNT(*) count FROM verses WHERE translation_id=?').get(source.translationId) as {count:number}).count;

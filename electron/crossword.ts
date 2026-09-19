@@ -66,7 +66,7 @@ export function selectClues(
   recentIds: string[],
   rng: () => number = Math.random,
 ): ClueRecord[] | { error: 'insufficient'; available: number; required: number } {
-  const enabled = pool.filter(c => c.answerNormalized.length >= 3);
+  const enabled = pool.filter(c => c.answerNormalized.length >= 2);
   if (enabled.length === 0) {
     return { error: 'insufficient', available: 0, required: count };
   }
@@ -92,7 +92,7 @@ export function selectDailyClues(
   dateStr: string,  // e.g. '2026-09-18'
   count: number,
 ): ClueRecord[] | { error: 'insufficient'; available: number; required: number } {
-  const enabled = pool.filter(c => c.answerNormalized.length >= 3);
+  const enabled = pool.filter(c => c.answerNormalized.length >= 2);
   if (enabled.length < count) {
     return { error: 'insufficient', available: enabled.length, required: count };
   }
@@ -128,53 +128,70 @@ export function generateCrossword(clues: ClueRecord[]): CrosswordResult | null {
   // Sort by answer length descending for best placement results
   const sorted = [...clues].sort((a, b) => b.answerNormalized.length - a.answerNormalized.length);
 
-  const grid: Grid = new Map();
-  const placed: Array<{ clueId: string; answer: string; row: number; col: number; direction: 'across' | 'down' }> = [];
+  // Try starting with the longest word, but if that fails, try other starting words
+  const maxStartAttempts = Math.min(5, sorted.length);
+  for (let startIdx = 0; startIdx < maxStartAttempts; startIdx++) {
+    const grid: Grid = new Map();
+    const placed: Array<{ clueId: string; answer: string; row: number; col: number; direction: 'across' | 'down' }> = [];
 
-  // Place first word horizontally at origin
-  const first = sorted[0];
-  for (let i = 0; i < first.answerNormalized.length; i++) {
-    grid.set(cellKey(0, i), { letter: first.answerNormalized[i] });
-  }
-  placed.push({ clueId: first.id, answer: first.answerNormalized, row: 0, col: 0, direction: 'across' });
-
-  // Attempt to place each remaining word
-  for (let wi = 1; wi < sorted.length; wi++) {
-    const word = sorted[wi];
-    const best = findBestPlacement(word.answerNormalized, placed, grid);
-    if (!best) {
-      // Try a secondary pass: attempt placing with lower standards (any single intersection)
-      const fallback = findAnyPlacement(word.answerNormalized, placed, grid);
-      if (!fallback) return null;
-      applyPlacement(word, fallback, placed, grid);
-    } else {
-      applyPlacement(word, best, placed, grid);
+    // Place first word horizontally at origin
+    const first = sorted[startIdx];
+    for (let i = 0; i < first.answerNormalized.length; i++) {
+      grid.set(cellKey(0, i), { letter: first.answerNormalized[i] });
     }
+    placed.push({ clueId: first.id, answer: first.answerNormalized, row: 0, col: 0, direction: 'across' });
+
+    const unplaced = sorted.filter((_, idx) => idx !== startIdx);
+
+    let failed = false;
+    while (unplaced.length > 0) {
+      let bestCandidate: { wordIndex: number; placement: Placement } | null = null;
+      for (let i = 0; i < unplaced.length; i++) {
+        const p = findBestPlacement(unplaced[i].answerNormalized, placed, grid);
+        if (p) {
+          if (!bestCandidate || p.intersections > bestCandidate.placement.intersections) {
+            bestCandidate = { wordIndex: i, placement: p };
+          }
+        }
+      }
+      if (!bestCandidate) {
+        failed = true;
+        break;
+      }
+      const [nextWord] = unplaced.splice(bestCandidate.wordIndex, 1);
+      applyPlacement(nextWord, bestCandidate.placement, placed, grid);
+    }
+
+    if (failed || placed.length < sorted.length) {
+      continue;
+    }
+
+    // Normalise grid so min row/col = 0
+    const rows = [...grid.keys()].map(k => parseInt(k.split(',')[0]));
+    const cols = [...grid.keys()].map(k => parseInt(k.split(',')[1]));
+    const minRow = Math.min(...rows);
+    const minCol = Math.min(...cols);
+
+    const normalisedPlaced = placed.map(p => ({
+      ...p,
+      row: p.row - minRow,
+      col: p.col - minCol,
+    }));
+
+    const maxRow = Math.max(...rows) - minRow;
+    const maxCol = Math.max(...cols) - minCol;
+
+    // Assign crossword numbers (standard: left-to-right, top-to-bottom)
+    const numberedWords = assignNumbers(normalisedPlaced, maxRow + 1, maxCol + 1);
+
+    return {
+      words: numberedWords,
+      rows: maxRow + 1,
+      cols: maxCol + 1,
+    };
   }
 
-  // Normalise grid so min row/col = 0
-  const rows = [...grid.keys()].map(k => parseInt(k.split(',')[0]));
-  const cols = [...grid.keys()].map(k => parseInt(k.split(',')[1]));
-  const minRow = Math.min(...rows);
-  const minCol = Math.min(...cols);
-
-  const normalisedPlaced = placed.map(p => ({
-    ...p,
-    row: p.row - minRow,
-    col: p.col - minCol,
-  }));
-
-  const maxRow = Math.max(...rows) - minRow;
-  const maxCol = Math.max(...cols) - minCol;
-
-  // Assign crossword numbers (standard: left-to-right, top-to-bottom)
-  const numberedWords = assignNumbers(normalisedPlaced, maxRow + 1, maxCol + 1);
-
-  return {
-    words: numberedWords,
-    rows: maxRow + 1,
-    cols: maxCol + 1,
-  };
+  return null;
 }
 
 function findBestPlacement(
@@ -330,38 +347,36 @@ function assignNumbers(
   rows: number,
   cols: number,
 ): PlacedWord[] {
-  // Build a set of all filled cells for quick lookup
-  const filled = new Set<string>();
+  // Find all cells that start a word in placed
+  const startCells = new Set<string>();
   for (const pw of placed) {
-    const dr = pw.direction === 'down' ? 1 : 0;
-    const dc = pw.direction === 'across' ? 1 : 0;
-    for (let i = 0; i < pw.answer.length; i++) {
-      filled.add(cellKey(pw.row + dr * i, pw.col + dc * i));
-    }
+    startCells.add(cellKey(pw.row, pw.col));
   }
 
-  // Map from "row,col" → word number
+  // Scan grid in reading order: top-to-bottom, left-to-right
   const cellNumbers = new Map<string, number>();
   let nextNum = 1;
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      if (!filled.has(cellKey(r, c))) continue;
-      const startsAcross = filled.has(cellKey(r, c)) && !filled.has(cellKey(r, c - 1)) && filled.has(cellKey(r, c + 1));
-      const startsDown   = filled.has(cellKey(r, c)) && !filled.has(cellKey(r - 1, c)) && filled.has(cellKey(r + 1, c));
-      if (startsAcross || startsDown) {
-        cellNumbers.set(cellKey(r, c), nextNum++);
+      const k = cellKey(r, c);
+      if (startCells.has(k)) {
+        cellNumbers.set(k, nextNum++);
       }
     }
   }
 
   return placed.map(pw => {
-    const num = cellNumbers.get(cellKey(pw.row, pw.col));
-    if (num === undefined) {
-      // Single-cell word or only word — give it number 1
-      return { clueId: pw.clueId, answer: pw.answer, row: pw.row, col: pw.col, direction: pw.direction, number: 1, length: pw.answer.length };
-    }
-    return { clueId: pw.clueId, answer: pw.answer, row: pw.row, col: pw.col, direction: pw.direction, number: num, length: pw.answer.length };
+    const num = cellNumbers.get(cellKey(pw.row, pw.col)) ?? 1;
+    return {
+      clueId: pw.clueId,
+      answer: pw.answer,
+      row: pw.row,
+      col: pw.col,
+      direction: pw.direction,
+      number: num,
+      length: pw.answer.length,
+    };
   });
 }
 

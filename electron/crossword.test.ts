@@ -174,3 +174,68 @@ describe('generateCrossword', () => {
     for (const w of result.words) expect(w.number).toBeGreaterThan(0);
   });
 });
+
+describe('curated crossword clues bank', () => {
+  it('selects 15 clues for Genesis and generates a valid board', async () => {
+    const { CROSSWORD_CLUES } = await import('./content.js');
+    const genClues: ClueRecord[] = CROSSWORD_CLUES.filter(c => c[1] === 'GEN').map(c => ({
+      id: c[0],
+      bookId: c[1],
+      clueText: c[5],
+      answer: c[6],
+      answerNormalized: c[7],
+      reference: c[8]
+    }));
+    expect(genClues.length).toBe(25);
+    const selected = selectClues(genClues, 15, []);
+    expect(Array.isArray(selected)).toBe(true);
+    if (Array.isArray(selected)) {
+      expect(selected.length).toBe(15);
+      const layout = generateCrossword(selected);
+      expect(layout).not.toBeNull();
+      expect(layout!.words.length).toBe(15);
+    }
+  });
+
+  it('selects 15 clues for Exodus and generates a valid board', async () => {
+    const { CROSSWORD_CLUES } = await import('./content.js');
+    const exoClues: ClueRecord[] = CROSSWORD_CLUES.filter(c => c[1] === 'EXO').map(c => ({
+      id: c[0],
+      bookId: c[1],
+      clueText: c[5],
+      answer: c[6],
+      answerNormalized: c[7],
+      reference: c[8]
+    }));
+    expect(exoClues.length).toBe(21);
+    const selected = selectClues(exoClues, 15, []);
+    expect(Array.isArray(selected)).toBe(true);
+    if (Array.isArray(selected)) {
+      expect(selected.length).toBe(15);
+      const layout = generateCrossword(selected);
+      expect(layout).not.toBeNull();
+      expect(layout!.words.length).toBe(15);
+    }
+  });
+
+  it('selects 15 clues for Acts and generates a valid board', async () => {
+    const { CROSSWORD_CLUES } = await import('./content.js');
+    const actClues: ClueRecord[] = CROSSWORD_CLUES.filter(c => c[1] === 'ACT').map(c => ({
+      id: c[0],
+      bookId: c[1],
+      clueText: c[5],
+      answer: c[6],
+      answerNormalized: c[7],
+      reference: c[8]
+    }));
+    expect(actClues.length).toBe(29);
+    const selected = selectClues(actClues, 15, []);
+    expect(Array.isArray(selected)).toBe(true);
+    if (Array.isArray(selected)) {
+      expect(selected.length).toBe(15);
+      const layout = generateCrossword(selected);
+      expect(layout).not.toBeNull();
+      expect(layout!.words.length).toBe(15);
+    }
+  });
+});

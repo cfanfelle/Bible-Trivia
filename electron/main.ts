@@ -224,7 +224,7 @@ function registerCrossword(){
   if(!activeProfileId)throw new Error('No profile');
   const bid=String(bookId);
   const stats:any=user.prepare('SELECT boards_completed FROM crossword_book_stats WHERE profile_id=? AND book_id=?').get(activeProfileId,bid)??{boards_completed:0};
-  const uniqueSolved=(user.prepare('SELECT COUNT(*) count FROM crossword_history WHERE profile_id=? AND clue_id LIKE ?').get(activeProfileId,bid+'-CW-%') as any).count;
+  const uniqueSolved=(user.prepare('SELECT COUNT(*) count FROM crossword_history WHERE profile_id=? AND (clue_id LIKE ? OR clue_id LIKE ?)').get(activeProfileId,'CROSS-'+bid+'-%',bid+'-%') as any).count;
   const totalClues=(content.prepare('SELECT COUNT(*) count FROM crossword_clues WHERE book_id=? AND enabled=1').get(bid) as any).count;
   return {boardsCompleted:stats.boards_completed,uniqueCluesSolved:uniqueSolved,totalClues};
  });
