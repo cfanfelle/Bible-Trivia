@@ -76,6 +76,7 @@ export interface AttemptResult {
   missing:string[];
   wrong:{expected:string;typed:string}[];
   extra:string[];
+  misplaced?:string[];
   reordered:boolean;
   passed:boolean;
 }

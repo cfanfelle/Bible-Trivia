@@ -3,10 +3,13 @@ import {
   normalizeForComparison,
   tokenize,
   levenshtein,
+  damerauLevenshtein,
+  isTypo,
   compareAttempt,
   chunkText,
   generateExercise,
   adaptLevel,
+  computeNextTrainingStep,
   updateWeakWords,
   scheduleNextReview,
   computeMastery,
@@ -32,25 +35,42 @@ describe('normalizeForComparison', () => {
   it('handles smart quotes', () => {
     expect(normalizeForComparison('\u201cGod\u201d')).toBe('god');
   });
+
+  it('handles leading and trailing double quotes properly', () => {
+    expect(tokenize('"Be strong and courageous"')).toEqual(['be', 'strong', 'and', 'courageous']);
+  });
 });
 
-// ─── levenshtein ─────────────────────────────────────────────────────────────
+// ─── damerauLevenshtein & isTypo ──────────────────────────────────────────────
 
-describe('levenshtein', () => {
+describe('damerauLevenshtein & isTypo', () => {
   it('returns 0 for identical strings', () => {
-    expect(levenshtein('hello', 'hello')).toBe(0);
+    expect(damerauLevenshtein('hello', 'hello')).toBe(0);
   });
 
   it('returns length of b for empty a', () => {
-    expect(levenshtein('', 'abc')).toBe(3);
+    expect(damerauLevenshtein('', 'abc')).toBe(3);
   });
 
   it('computes substitution', () => {
-    expect(levenshtein('kitten', 'sitting')).toBe(3);
+    expect(damerauLevenshtein('kitten', 'sitting')).toBe(3);
   });
 
-  it('computes single transposition', () => {
-    expect(levenshtein('teh', 'the')).toBe(2);
+  it('computes single transposition as distance 1', () => {
+    expect(damerauLevenshtein('teh', 'the')).toBe(1);
+    expect(damerauLevenshtein('recieve', 'receive')).toBe(1);
+    expect(damerauLevenshtein('strenght', 'strength')).toBe(1);
+  });
+
+  it('recognizes transpositions as typos', () => {
+    expect(isTypo('the', 'teh')).toBe(true);
+    expect(isTypo('receive', 'recieve')).toBe(true);
+    expect(isTypo('strength', 'strenght')).toBe(true);
+  });
+
+  it('requires exact match for very short words <= 2 chars', () => {
+    expect(isTypo('no', 'on')).toBe(false);
+    expect(isTypo('in', 'is')).toBe(false);
   });
 });
 
@@ -67,15 +87,16 @@ describe('compareAttempt', () => {
     expect(r.wrong.length).toBe(0);
   });
 
-  it('accepts typos as near-correct, still passes', () => {
+  it('accepts typos with full score (1.0), passes without penalty', () => {
+    // User feedback: "dont score bad for typos just wrong words or words in wrong places"
     const attempt = 'For God so lovd the world that he gave his only begoten Son';
     const r = compareAttempt(MASTER, attempt);
-    // typos don't cause failure
+    expect(r.score).toBe(1);
     expect(r.passed).toBe(true);
     expect(r.typos.length).toBeGreaterThan(0);
   });
 
-  it('missing words reduce score', () => {
+  it('missing words reduce score and fail', () => {
     const r = compareAttempt('God is great and mighty', 'God is mighty');
     expect(r.score).toBeLessThan(1);
     expect(r.missing.length).toBeGreaterThan(0);
@@ -85,6 +106,13 @@ describe('compareAttempt', () => {
   it('extra words are detected', () => {
     const r = compareAttempt('God is love', 'God is the love here');
     expect(r.extra.length).toBeGreaterThan(0);
+  });
+
+  it('words in the wrong place fail and are marked reordered', () => {
+    const r = compareAttempt('be strong and very courageous', 'and be strong very courageous');
+    expect(r.passed).toBe(false);
+    expect(r.reordered).toBe(true);
+    expect(r.misplaced).toContain('and');
   });
 
   it('handles empty master gracefully', () => {
@@ -155,29 +183,27 @@ describe('generateExercise', () => {
   it('weak words appear in blanked positions', () => {
     const weakWords: WeakWord[] = [{ word: 'shepherd', failCount: 3 }];
     const ex = generateExercise(CHUNKS, [0], 3, weakWords);
-    // Can't guarantee position but should not error
     expect(ex.type).toBe('easy-blanks');
   });
 });
 
-// ─── adaptLevel ───────────────────────────────────────────────────────────────
+// ─── adaptLevel & computeNextTrainingStep ─────────────────────────────────────
 
 describe('adaptLevel', () => {
-  it('does not change level with fewer than 2 entries', () => {
+  it('returns current level when log is empty', () => {
     expect(adaptLevel(3, [])).toBe(3);
-    expect(adaptLevel(3, [{ level: 3, score: 1, timestamp: 0, passed: true }])).toBe(3);
   });
 
-  it('advances from study level 1 to level 2 upon completing study', () => {
+  it('advances upon passing', () => {
     expect(adaptLevel(1, [{ level: 1, score: 1, timestamp: 0, passed: true }])).toBe(2);
+    expect(adaptLevel(3, [{ level: 3, score: 0.9, timestamp: 0, passed: true }])).toBe(4);
   });
 
-  it('levels up after 2 consecutive passes', () => {
+  it('stays on level after a single failure to allow retry', () => {
     const log: PerformanceEntry[] = [
-      { level: 3, score: 0.9, timestamp: 0, passed: true },
-      { level: 3, score: 0.95, timestamp: 1, passed: true },
+      { level: 4, score: 0.5, timestamp: 0, passed: false },
     ];
-    expect(adaptLevel(3, log)).toBe(4);
+    expect(adaptLevel(4, log)).toBe(4);
   });
 
   it('levels down after 2 consecutive genuine failures', () => {
@@ -199,9 +225,57 @@ describe('adaptLevel', () => {
   it('does not exceed maxLevel', () => {
     const log: PerformanceEntry[] = [
       { level: 8, score: 1, timestamp: 0, passed: true },
-      { level: 8, score: 1, timestamp: 1, passed: true },
     ];
     expect(adaptLevel(8, log, 8)).toBe(8);
+  });
+});
+
+describe('computeNextTrainingStep (progressive chunk onboarding)', () => {
+  const totalChunks = 5;
+
+  it('ramps Chunk 0 from Level 1 through Level 6', () => {
+    expect(computeNextTrainingStep(0, 1, true, 1.0, totalChunks, [])).toEqual({ nextChunk: 0, nextLevel: 2 });
+    expect(computeNextTrainingStep(0, 2, true, 1.0, totalChunks, [])).toEqual({ nextChunk: 0, nextLevel: 3 });
+    expect(computeNextTrainingStep(0, 5, true, 1.0, totalChunks, [])).toEqual({ nextChunk: 0, nextLevel: 6 });
+  });
+
+  it('after Chunk 0 Level 6 recall passes, introduces Chunk 1 at Level 1 (Study)', () => {
+    // "when we introduce new chunks we have to go over them nice and slow and ramp our way up"
+    const next = computeNextTrainingStep(0, 6, true, 1.0, totalChunks, []);
+    expect(next).toEqual({ nextChunk: 1, nextLevel: 1 });
+  });
+
+  it('ramps Chunk 1 from Level 1 through Level 6', () => {
+    expect(computeNextTrainingStep(1, 1, true, 1.0, totalChunks, [])).toEqual({ nextChunk: 1, nextLevel: 2 });
+    expect(computeNextTrainingStep(1, 5, true, 1.0, totalChunks, [])).toEqual({ nextChunk: 1, nextLevel: 6 });
+  });
+
+  it('after Chunk 1 Level 6 recall passes, advances to Level 7 (Combined Chunks 1 + 2)', () => {
+    const next = computeNextTrainingStep(1, 6, true, 1.0, totalChunks, []);
+    expect(next).toEqual({ nextChunk: 1, nextLevel: 7 });
+  });
+
+  it('after Level 7 combined chunks passes, introduces Chunk 2 at Level 1 (Study)', () => {
+    const next = computeNextTrainingStep(1, 7, true, 1.0, totalChunks, []);
+    expect(next).toEqual({ nextChunk: 2, nextLevel: 1 });
+  });
+
+  it('after final chunk combined passes, advances to Level 8 (Full Verse Recall)', () => {
+    const lastChunkIndex = totalChunks - 1; // 4
+    const next = computeNextTrainingStep(lastChunkIndex, 7, true, 1.0, totalChunks, []);
+    expect(next).toEqual({ nextChunk: lastChunkIndex, nextLevel: 8 });
+  });
+
+  it('single-chunk verse goes straight from Level 6 to Level 8', () => {
+    const next = computeNextTrainingStep(0, 6, true, 1.0, 1, []);
+    expect(next).toEqual({ nextChunk: 0, nextLevel: 8 });
+  });
+
+  it('keeps chunk and stays/retries on failure', () => {
+    const log: PerformanceEntry[] = [{ level: 3, score: 0.5, timestamp: 0, passed: false }];
+    const next = computeNextTrainingStep(2, 3, false, 0.5, totalChunks, log);
+    expect(next.nextChunk).toBe(2);
+    expect(next.nextLevel).toBe(3);
   });
 });
 

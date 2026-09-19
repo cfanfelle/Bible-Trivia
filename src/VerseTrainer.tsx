@@ -263,6 +263,7 @@ function TrainingSession({ verse, onBack, onRefreshVerse }: {
   const [result, setResult] = useState<AttemptResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [newLevel, setNewLevel] = useState<number | null>(null);
+  const [submittedExpectedText, setSubmittedExpectedText] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const loadExercise = async () => {
@@ -273,6 +274,7 @@ function TrainingSession({ verse, onBack, onRefreshVerse }: {
     setBlankInputs({});
     setResult(null);
     setNewLevel(null);
+    setSubmittedExpectedText(null);
   };
 
   useEffect(() => { void loadExercise(); }, [verse.id]);
@@ -301,7 +303,7 @@ function TrainingSession({ verse, onBack, onRefreshVerse }: {
       if (exData.exercise.type === 'study' || level === 1) {
         finalAttempt = exData.exercise.displayText;
       }
-      const res = await api<{ result: AttemptResult; newLevel: number; passed: boolean }>('memory:submit', {
+      const res = await api<{ result: AttemptResult; newLevel: number; newChunk?: number; passed: boolean; expectedText?: string }>('memory:submit', {
         id: verse.id,
         attempt: finalAttempt,
       });
@@ -311,6 +313,7 @@ function TrainingSession({ verse, onBack, onRefreshVerse }: {
       }
       setResult(res.result);
       setNewLevel(res.newLevel);
+      if (res.expectedText) setSubmittedExpectedText(res.expectedText);
     } finally {
       setSubmitting(false);
     }
@@ -336,7 +339,9 @@ function TrainingSession({ verse, onBack, onRefreshVerse }: {
           <span className="level-tag">{levelName}</span>
           {chunks.length > 1 && (
             <span style={{ fontSize: 12, color: '#788079' }}>
-              Chunk {currentChunk + 1} of {chunks.length}
+              {level === 7
+                ? `Chunks 1–${currentChunk + 1} of ${chunks.length}`
+                : `Chunk ${currentChunk + 1} of ${chunks.length}`}
             </span>
           )}
           {newLevel !== null && newLevel !== level && (
@@ -344,13 +349,24 @@ function TrainingSession({ verse, onBack, onRefreshVerse }: {
               {newLevel > level ? '↑ Level up!' : '↓ More practice'}
             </span>
           )}
+          <button
+            className="ghost-btn"
+            style={{ marginLeft: 'auto', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', background: 'none', border: '1px solid #d0d7d2', borderRadius: 4, cursor: 'pointer', color: '#555' }}
+            onClick={async () => {
+              await api('memory:restart-chunk', verse.id);
+              await loadExercise();
+            }}
+            title="Start this chunk over from Study mode"
+          >
+            <RotateCcw size={12} /> Restart Chunk
+          </button>
         </div>
       </div>
 
       {result ? (
         <ResultDisplay
           result={result}
-          expectedText={chunks[currentChunk]?.text ?? verse.master_text}
+          expectedText={submittedExpectedText ?? chunks[currentChunk]?.text ?? verse.master_text}
           level={level}
           onContinue={continueToNext}
         />
@@ -527,10 +543,10 @@ function ResultDisplay({ result, expectedText, level, onContinue }: {
         <span className={`diff-tag ${result.passed ? 'passed' : 'failed'}`}>
           {result.passed ? '✓ Passed' : '✗ Keep practicing'} — {scorePct}%
         </span>
-        {result.typos.length > 0 && <span className="diff-tag" style={{ background: '#fdf5d8', color: '#9a7750' }}>~{result.typos.length} typo{result.typos.length > 1 ? 's' : ''} (minor)</span>}
+        {result.typos.length > 0 && <span className="diff-tag" style={{ background: '#fdf5d8', color: '#9a7750' }}>~{result.typos.length} typo{result.typos.length > 1 ? 's' : ''} (accepted)</span>}
         {result.missing.length > 0 && <span className="diff-tag" style={{ background: '#f7e7e5', color: '#a75b53' }}>{result.missing.length} missing</span>}
         {result.wrong.length > 0 && <span className="diff-tag" style={{ background: '#f7e7e5', color: '#a75b53' }}>{result.wrong.length} wrong</span>}
-        {result.reordered && <span className="diff-tag" style={{ background: '#f7e7e5', color: '#a75b53' }}>reordered</span>}
+        {result.reordered && <span className="diff-tag" style={{ background: '#f7e7e5', color: '#a75b53' }}>words out of order</span>}
       </div>
 
       {(!result.passed && level >= 5) && (
@@ -550,9 +566,14 @@ function ResultDisplay({ result, expectedText, level, onContinue }: {
           <b>Wrong:</b> {result.wrong.map(w => `"${w.typed}" instead of "${w.expected}"`).join('; ')}
         </p>
       )}
+      {result.reordered && (
+        <p style={{ fontSize: 14, color: '#a75b53' }}>
+          <b>Words in wrong place:</b> {result.misplaced && result.misplaced.length > 0 ? result.misplaced.map(m => `"${m}"`).join(', ') : 'Words were typed in the wrong order.'}
+        </p>
+      )}
       {result.typos.length > 0 && (
         <p style={{ fontSize: 14, color: '#9a7750' }}>
-          <b>Typos (counted as correct):</b> {result.typos.map(t => `"${t.typed}"`).join(', ')}
+          <b>Typos (accepted):</b> {result.typos.map(t => `"${t.typed}" for "${t.word}"`).join(', ')}
         </p>
       )}
 

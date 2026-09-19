@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'; import { ensureContent } from './conte
 import { readChapter, searchVerses } from './bible.js';
 import { generateCrossword, selectClues, selectDailyClues, normalizeCrosswordAnswer } from './crossword.js';
 import type { ClueRecord } from './crossword.js';
-import { chunkText, compareAttempt, generateExercise, adaptLevel, updateWeakWords, scheduleNextReview, computeMastery, normalizeForComparison, tokenize } from './verse-trainer.js';
+import { chunkText, compareAttempt, generateExercise, adaptLevel, computeNextTrainingStep, updateWeakWords, scheduleNextReview, computeMastery, normalizeForComparison, tokenize } from './verse-trainer.js';
 import type { WeakWord, PerformanceEntry } from './verse-trainer.js';
 import electronUpdater from 'electron-updater';
 const { autoUpdater } = electronUpdater;
@@ -348,14 +348,31 @@ function registerVerseTrainer(){
   ensureTraining(v.id,v.master_text);
   const fresh=getVerse(v.id);
   const chunks=JSON.parse(fresh.chunks);
-  const level=fresh.difficulty_level??1;
+  let level=fresh.difficulty_level??1;
   const currentChunk=fresh.current_chunk_index??0;
   const weakWords:WeakWord[]=JSON.parse(fresh.weak_words??'[]');
+  const log:PerformanceEntry[]=JSON.parse(fresh.performance_log??'[]');
+
+  // Healing check: if user was pushed to level 7 (combined) without mastering chunk recall (level 6) on this chunk,
+  // reset difficulty_level to 1 (Study) so they ramp up nice and slow.
+  if(currentChunk>0&&level===7){
+   const hasMasteredChunk=log.some(e=>e.level===6&&e.passed);
+   if(!hasMasteredChunk){
+    level=1;
+    user.prepare('UPDATE memory_training SET difficulty_level=1 WHERE verse_id=?').run(v.id);
+   }
+  }
+
   // Determine active chunk indices based on level and current position
   let activeIndices:number[];
-  if(level<=6){activeIndices=[currentChunk];}
-  else if(level===7){activeIndices=currentChunk>0?[currentChunk-1,currentChunk]:[0];}
-  else{activeIndices=chunks.map((_:any,i:number)=>i);}
+  if(level<=6){
+   activeIndices=[currentChunk];
+  }else if(level===7){
+   // Combine all chunks learned up through currentChunk (0..currentChunk)
+   activeIndices=Array.from({length:currentChunk+1},(_,i)=>i);
+  }else{
+   activeIndices=chunks.map((_:any,i:number)=>i);
+  }
   const exercise=generateExercise(chunks,activeIndices,level,weakWords);
   return {exercise,chunks,level,currentChunk,weakWords};
  });
@@ -371,9 +388,13 @@ function registerVerseTrainer(){
   const weakWords:WeakWord[]=JSON.parse(fresh.weak_words??'[]');
   // Determine the expected text for this exercise
   let expectedText:string;
-  if(level<=6){expectedText=chunks[currentChunk]?.text??'';}
-  else if(level===7){expectedText=(currentChunk>0?[chunks[currentChunk-1],chunks[currentChunk]]:[chunks[0]]).filter(Boolean).map((c:any)=>c.text).join(' ');}
-  else{expectedText=v.master_text;}
+  if(level<=6){
+   expectedText=chunks[currentChunk]?.text??'';
+  }else if(level===7){
+   expectedText=chunks.slice(0,currentChunk+1).map((c:any)=>c.text).join(' ');
+  }else{
+   expectedText=v.master_text;
+  }
   const attempt=String(p.attempt??'');
   let result;
   if(level<=1){
@@ -384,6 +405,7 @@ function registerVerseTrainer(){
     missing:[],
     wrong:[],
     extra:[],
+    misplaced:[],
     reordered:false,
     passed:true,
    };
@@ -394,21 +416,24 @@ function registerVerseTrainer(){
   log.push({level,score:result.score,timestamp:Date.now(),passed:result.passed});
   // Keep log manageable
   if(log.length>20)log.splice(0,log.length-20);
-  const newLevel=adaptLevel(level,log);
+
+  const {nextChunk,nextLevel}=computeNextTrainingStep(currentChunk,level,result.passed,result.score,chunks.length,log);
   const newWeakWords=updateWeakWords(weakWords,result);
-  // Advance chunk when passing at level 6+ 
-  let newChunk=currentChunk;
-  if(result.passed&&level>=6&&currentChunk<chunks.length-1){
-   // Only advance chunk when the user has mastered this one at chunk-recall level
-   if(level===6)newChunk=Math.min(currentChunk+1,chunks.length-1);
-  }
-  user.prepare('UPDATE memory_training SET difficulty_level=?,current_chunk_index=?,weak_words=?,performance_log=? WHERE verse_id=?').run(newLevel,newChunk,JSON.stringify(newWeakWords),JSON.stringify(log),v.id);
+
+  user.prepare('UPDATE memory_training SET difficulty_level=?,current_chunk_index=?,weak_words=?,performance_log=? WHERE verse_id=?').run(nextLevel,nextChunk,JSON.stringify(newWeakWords),JSON.stringify(log),v.id);
   // Award XP (once per exercise submission — cannot farm)
   if(result.passed){
-   const isFullRecall=level>=8||chunks.length<=1;
+   const isFullRecall=nextLevel>=8||chunks.length<=1;
    awardXp(activeProfileId!,isFullRecall?XP.verseFullRecall:XP.verseExercise,'verse-exercise');
   }
-  return {result,newLevel,passed:result.passed};
+  return {result,newLevel:nextLevel,newChunk:nextChunk,passed:result.passed,expectedText};
+ });
+ ipcMain.handle('memory:restart-chunk',(_,id)=>{
+  if(!activeProfileId)throw new Error('No profile');
+  const v=getVerse(Number(id));
+  if(!v||v.profile_id!==activeProfileId)throw new Error('Verse not found.');
+  user.prepare('UPDATE memory_training SET difficulty_level=1 WHERE verse_id=?').run(v.id);
+  return getVerse(v.id);
  });
  ipcMain.handle('memory:review-list',()=>{
   if(!activeProfileId)throw new Error('No profile');

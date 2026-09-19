@@ -40,6 +40,7 @@ export interface AttemptResult {
   missing: string[];
   wrong: { expected: string; typed: string }[];
   extra: string[];
+  misplaced?: string[];
   reordered: boolean;
   passed: boolean;
 }
@@ -87,57 +88,85 @@ export function normalizeForComparison(text: string): string {
     // Remove punctuation except apostrophes inside words
     .replace(/["""'']/g, "'")    // smart quotes to straight
     .replace(/[^a-z0-9'\s]/g, ' ')
-    .replace(/'\s/g, ' ')        // trailing apostrophes
-    .replace(/\s'/g, ' ')        // leading apostrophes
+    .replace(/'\s/g, ' ')        // trailing apostrophes before space
+    .replace(/\s'/g, ' ')        // leading apostrophes after space
+    .replace(/^'+|'+$/g, '')     // leading or trailing apostrophes at text boundaries
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-/** Split normalised text into word tokens. */
+/** Split normalised text into word tokens, stripping any leading/trailing quotes from tokens. */
 export function tokenize(text: string): string[] {
-  return normalizeForComparison(text).split(' ').filter(Boolean);
+  return normalizeForComparison(text)
+    .split(' ')
+    .map(w => w.replace(/^'+|'+$/g, ''))
+    .filter(Boolean);
 }
 
-// ─── Levenshtein distance ─────────────────────────────────────────────────────
+// ─── Damerau-Levenshtein distance ─────────────────────────────────────────────
 
-export function levenshtein(a: string, b: string): number {
+export function damerauLevenshtein(a: string, b: string): number {
   if (a === b) return 0;
   const m = a.length, n = b.length;
   if (m === 0) return n;
   if (n === 0) return m;
-  const row: number[] = Array.from({ length: n + 1 }, (_, i) => i);
+
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+
   for (let i = 1; i <= m; i++) {
-    let prev = i;
     for (let j = 1; j <= n; j++) {
-      const val = a[i - 1] === b[j - 1] ? row[j - 1] : 1 + Math.min(row[j - 1], row[j], prev);
-      row[j - 1] = prev;
-      prev = val;
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,        // deletion
+        dp[i][j - 1] + 1,        // insertion
+        dp[i - 1][j - 1] + cost  // substitution
+      );
+      // Adjacent character transposition (e.g. "recieve" -> "receive", "strenght" -> "strength")
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+      }
     }
-    row[n] = prev;
   }
-  return row[n];
+  return dp[m][n];
+}
+
+/** Keep levenshtein as an alias for backward compatibility. */
+export function levenshtein(a: string, b: string): number {
+  return damerauLevenshtein(a, b);
 }
 
 /** Returns true if the typed word is a likely typo of the expected word. */
-function isTypo(expected: string, typed: string): boolean {
-  if (expected.length < 3) return false;           // short words need exact match
-  const dist = levenshtein(expected, typed);
+export function isTypo(expected: string, typed: string): boolean {
+  if (expected === typed) return false;
+  if (expected.length <= 2) return false;           // short words (in, to, of, no, be) need exact match
+  const dist = damerauLevenshtein(expected, typed);
+  if (dist === 0) return false;
   const maxLen = Math.max(expected.length, typed.length);
-  return dist > 0 && dist <= Math.max(1, Math.floor(maxLen * 0.25));
+  // 3-4 chars: allow 1 edit (e.g. teh -> the, god -> gdo)
+  if (maxLen <= 4) return dist === 1;
+  // 5-7 chars: allow up to 2 edits (e.g. transposition, or 1 transposition + 1 slip)
+  if (maxLen <= 7) return dist <= 2;
+  // 8+ chars: allow up to 3 edits or ~35% of length
+  return dist <= Math.max(2, Math.floor(maxLen * 0.35));
 }
 
 // ─── Attempt comparison ───────────────────────────────────────────────────────
 
 /**
  * Compare the user's typed attempt against the master text.
- * Handles normalisation, typo detection, missing/extra/wrong words.
+ * Handles normalisation, typo detection, missing/extra/wrong words, and misplaced words.
+ *
+ * NOTE: User feedback: "dont score bad for typos just wrong words or words in wrong places"
+ * Typos receive full credit towards the score and do not fail the attempt.
  */
 export function compareAttempt(masterText: string, attempt: string): AttemptResult {
   const expected = tokenize(masterText);
   const typed    = tokenize(attempt);
 
   if (expected.length === 0) {
-    return { score: 1, correct: [], typos: [], missing: [], wrong: [], extra: [], reordered: false, passed: true };
+    return { score: 1, correct: [], typos: [], missing: [], wrong: [], extra: [], misplaced: [], reordered: false, passed: true };
   }
 
   // DP longest-common-subsequence alignment
@@ -173,14 +202,26 @@ export function compareAttempt(masterText: string, attempt: string): AttemptResu
     }
   }
 
-  // Score: correct (full) + typo (half) — normalised by expected word count
-  const numerator = correct.length + typos.length * 0.5;
-  const score = Math.min(1, numerator / expected.length);
+  // Detect words placed in the wrong position (misplaced words)
+  const misplaced: string[] = [];
+  const missingSet = new Set(missing);
+  for (const ew of extra) {
+    if (missingSet.has(ew)) {
+      misplaced.push(ew);
+      reordered = true;
+    }
+  }
 
-  // Pass threshold: score ≥ 0.85 (typos don't cause failure on their own)
-  const passed = score >= 0.85 && missing.length === 0 && wrong.length === 0;
+  // Score: typos receive FULL credit (1.0).
+  // Deduct for genuinely wrong words and extra words.
+  const numerator = correct.length + typos.length;
+  const penalty = wrong.length * 0.5 + extra.length * 0.25;
+  const score = Math.max(0, Math.min(1, (numerator - penalty) / expected.length));
 
-  return { score, correct, typos, missing, wrong, extra, reordered, passed };
+  // Pass threshold: score >= 0.85 and no missing words, no wrong words, no misplaced words.
+  const passed = score >= 0.85 && missing.length === 0 && wrong.length === 0 && !reordered;
+
+  return { score, correct, typos, missing, wrong, extra, misplaced, reordered, passed };
 }
 
 // Minimal edit-script alignment
@@ -343,7 +384,9 @@ export function generateExercise(
       return {
         type,
         chunkIndices: activeChunkIndices,
-        promptText: combinedText,
+        promptText: chunks.length > 1
+          ? `Read and study Chunk ${activeChunkIndices[0] + 1} of ${chunks.length}. Press Continue when you feel familiar with it.`
+          : 'Read and study this passage. Press Continue when you feel familiar with it.',
         displayText: combinedText,
       };
 
@@ -394,17 +437,21 @@ export function generateExercise(
       return {
         type,
         chunkIndices: activeChunkIndices,
-        promptText: `Type from memory: chunk ${activeChunkIndices.map(i => i + 1).join('+')}`,
+        promptText: `Type chunk ${activeChunkIndices[0] + 1} from memory`,
         displayText: '',
       };
 
-    case 'combined-chunks':
+    case 'combined-chunks': {
+      const first = activeChunkIndices[0] + 1;
+      const last = activeChunkIndices[activeChunkIndices.length - 1] + 1;
+      const rangeStr = activeChunkIndices.length === 2 ? `${first} + ${last}` : `${first} through ${last}`;
       return {
         type,
         chunkIndices: activeChunkIndices,
-        promptText: `Type chunks ${activeChunkIndices.map(i => i + 1).join(' + ')} from memory`,
+        promptText: `Type chunks ${rangeStr} from memory`,
         displayText: '',
       };
+    }
 
     case 'full-recall':
       return {
@@ -456,9 +503,9 @@ function buildFirstLetterHints(text: string): string {
   }).join('');
 }
 
-// ─── Adaptive difficulty ──────────────────────────────────────────────────────
+// ─── Adaptive difficulty & chunk progression ─────────────────────────────────
 
-const LEVEL_UP_THRESHOLD   = 2; // consecutive passes to advance
+const LEVEL_UP_THRESHOLD   = 1; // 1 solid pass (>= 0.85) to advance
 const LEVEL_DOWN_THRESHOLD = 2; // consecutive genuine failures to retreat
 const PASS_SCORE           = 0.85;
 const STRUGGLE_SCORE       = 0.60; // below this = genuine struggle
@@ -469,26 +516,80 @@ export function adaptLevel(
   recentLog: PerformanceEntry[],
   maxLevel = 8,
 ): number {
-  if (currentLevel <= 1) {
-    const last = recentLog[recentLog.length - 1];
-    if (last && last.passed) return 2;
-    return 1;
-  }
+  if (recentLog.length === 0) return currentLevel;
+  const last = recentLog[recentLog.length - 1];
 
-  // Consider only last 5 attempts
-  const recent = recentLog.slice(-5);
-  if (recent.length < 2) return currentLevel;
-
-  const consecutivePasses = countConsecutiveFromEnd(recent, e => e.passed);
-  const consecutiveFailures = countConsecutiveFromEnd(recent, e => !e.passed && e.score < STRUGGLE_SCORE);
-
-  if (consecutivePasses >= LEVEL_UP_THRESHOLD) {
+  if (last.passed) {
     return Math.min(maxLevel, currentLevel + 1);
   }
+
+  // If failed: check for repeated struggles to step down
+  const recent = recentLog.slice(-4);
+  const consecutiveFailures = countConsecutiveFromEnd(recent, e => !e.passed && e.score < STRUGGLE_SCORE);
+
   if (consecutiveFailures >= LEVEL_DOWN_THRESHOLD) {
     return Math.max(1, currentLevel - 1);
   }
+
   return currentLevel;
+}
+
+/**
+ * Compute the next chunk and difficulty level following an attempt.
+ * Ensures each chunk is introduced and scaffolded from Study (Level 1)
+ * before being recalled or combined.
+ */
+export function computeNextTrainingStep(
+  currentChunk: number,
+  currentLevel: number,
+  passed: boolean,
+  score: number,
+  totalChunks: number,
+  recentLog: PerformanceEntry[],
+): { nextChunk: number; nextLevel: number } {
+  if (!passed) {
+    // If not passed: stay on current chunk, adapt level (retry or step down if struggling)
+    return {
+      nextChunk: currentChunk,
+      nextLevel: adaptLevel(currentLevel, recentLog),
+    };
+  }
+
+  // Attempt passed!
+  if (currentLevel < 6) {
+    // Ramping up through chunk stages (1 Study -> 2 Word bank -> 3 Easy blanks -> 4 Hard blanks -> 5 First letters -> 6 Recall)
+    return {
+      nextChunk: currentChunk,
+      nextLevel: currentLevel + 1,
+    };
+  }
+
+  if (currentLevel === 6) {
+    // Mastered chunk recall for this chunk!
+    if (totalChunks <= 1) {
+      // Single-chunk verse goes straight to full recall
+      return { nextChunk: 0, nextLevel: 8 };
+    }
+    if (currentChunk === 0) {
+      // Chunk 0 is mastered! Now introduce Chunk 1 "nice and slow and ramp our way up"
+      return { nextChunk: 1, nextLevel: 1 };
+    }
+    // For Chunk 1 and beyond, now combine all chunks learned so far (0..currentChunk)
+    return { nextChunk: currentChunk, nextLevel: 7 };
+  }
+
+  if (currentLevel === 7) {
+    // Mastered combined chunks up through currentChunk!
+    if (currentChunk < totalChunks - 1) {
+      // Advance to the next new chunk and start at Level 1 (Study) to ramp up
+      return { nextChunk: currentChunk + 1, nextLevel: 1 };
+    }
+    // All chunks have been learned and combined! Move to Full Verse Recall
+    return { nextChunk: currentChunk, nextLevel: 8 };
+  }
+
+  // Level 8 (Full Verse Recall) passed!
+  return { nextChunk: currentChunk, nextLevel: 8 };
 }
 
 function countConsecutiveFromEnd<T>(arr: T[], pred: (x: T) => boolean): number {
