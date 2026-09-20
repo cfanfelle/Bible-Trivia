@@ -31,6 +31,7 @@ export interface Exercise {
   displayText: string;         // text with blanks/hints shown
   wordBank?: string[];
   blankPositions?: number[];   // word indices that are blanked
+  blankAnswers?: Record<number, string>; // word index -> expected word
 }
 
 export interface AttemptResult {
@@ -265,99 +266,127 @@ function backtrack(dp: number[][], a: string[], b: string[]): AlignStep[] {
 
 // ─── Text chunking ────────────────────────────────────────────────────────────
 
-const MAX_CHUNK_WORDS = 15;
-const MIN_CHUNK_WORDS = 4;
+const TARGET_MAX_WORDS = 24;  // Natural max words in a single chunk
+const TARGET_MIN_WORDS = 6;   // Min words in a chunk (prevents chopped fragments)
 
 /**
- * Split masterText into learnable chunks.
- * Preference: sentence > clause > half.
- * A single short verse returns a single chunk.
+ * Split masterText into learnable, grammatically coherent chunks.
+ * Hierarchy: complete sentences > semicolons/colons > major comma groups > conjunctions.
+ * Avoids breaking verses into tiny chopped-up phrases.
  */
 export function chunkText(masterText: string): Chunk[] {
   const raw = masterText.trim();
   if (!raw) return [];
 
-  // Split on sentence boundaries first
-  const sentences = splitOnPattern(raw, /(?<=[.!?])\s+/);
-  const chunks: Chunk[] = [];
+  // Split on sentence boundaries first: [.!?] followed by whitespace
+  const rawSentences = raw.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+  const rawChunks: string[] = [];
 
-  for (const sentence of sentences) {
-    const words = sentence.trim().split(/\s+/);
-    if (words.length <= MAX_CHUNK_WORDS) {
-      chunks.push(makeChunk(sentence.trim(), chunks.length));
+  for (const sentence of rawSentences) {
+    const sWords = sentence.split(/\s+/).filter(Boolean);
+    if (sWords.length <= TARGET_MAX_WORDS) {
+      rawChunks.push(sentence);
     } else {
-      // Try splitting on clause boundaries (; :)
-      const clauses = splitOnPattern(sentence, /[;:]\s+/);
+      // Sentence is long (> 24 words). Try splitting on clause boundaries (semicolons, colons, em-dashes)
+      const clauses = sentence.split(/(?<=[;:—])\s+/).map(c => c.trim()).filter(Boolean);
       if (clauses.length > 1) {
         for (const clause of clauses) {
-          const cWords = clause.trim().split(/\s+/);
-          if (cWords.length <= MAX_CHUNK_WORDS) {
-            chunks.push(makeChunk(clause.trim(), chunks.length));
+          const cWords = clause.split(/\s+/).filter(Boolean);
+          if (cWords.length <= TARGET_MAX_WORDS) {
+            rawChunks.push(clause);
           } else {
-            // Split on commas
-            const commaClauses = splitOnPattern(clause, /,\s+/);
-            if (commaClauses.length > 1) {
-              for (const cc of commaClauses) {
-                splitIntoSizedChunks(cc.trim(), chunks);
-              }
-            } else {
-              splitIntoSizedChunks(clause.trim(), chunks);
-            }
+            // Clause is still long: group by commas if present
+            splitOnCommaGroups(clause, TARGET_MAX_WORDS, rawChunks);
           }
         }
       } else {
-        // Long sentence with no clause boundaries — split by half
-        splitIntoSizedChunks(sentence.trim(), chunks);
+        // Sentence has no semicolons/colons: try commas
+        splitOnCommaGroups(sentence, TARGET_MAX_WORDS, rawChunks);
       }
     }
   }
 
-  // Merge tiny chunks (< MIN_CHUNK_WORDS) with their neighbour
-  return mergeTinyChunks(chunks);
-}
-
-function makeChunk(text: string, index: number): Chunk {
-  return { index, text, wordCount: text.split(/\s+/).length };
-}
-
-function splitOnPattern(text: string, pattern: RegExp): string[] {
-  const parts: string[] = [];
-  let remaining = text;
-  let match;
-  pattern.lastIndex = 0;
-  const re = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : 'g' + pattern.flags);
-  let last = 0;
-  re.lastIndex = 0;
-  while ((match = re.exec(text)) !== null) {
-    parts.push(text.slice(last, match.index + (match[0].length > 1 ? 1 : 0)));
-    last = match.index + match[0].length;
+  // Merge tiny fragments (< TARGET_MIN_WORDS) with a neighbor so no fragment is a stranded phrase
+  const merged: string[] = [];
+  for (let i = 0; i < rawChunks.length; i++) {
+    const chunk = rawChunks[i];
+    const wCount = chunk.split(/\s+/).filter(Boolean).length;
+    if (wCount < TARGET_MIN_WORDS && merged.length > 0) {
+      const prev = merged[merged.length - 1];
+      const prevCount = prev.split(/\s+/).filter(Boolean).length;
+      if (prevCount + wCount <= TARGET_MAX_WORDS + 4) {
+        merged[merged.length - 1] = prev + ' ' + chunk;
+        continue;
+      }
+    }
+    merged.push(chunk);
   }
-  if (last < text.length) parts.push(text.slice(last));
-  return parts.filter(p => p.trim().length > 0);
-}
 
-function splitIntoSizedChunks(text: string, chunks: Chunk[]): void {
-  const words = text.split(/\s+/);
-  const mid = Math.ceil(words.length / 2);
-  const a = words.slice(0, mid).join(' ');
-  const b = words.slice(mid).join(' ');
-  if (a) chunks.push(makeChunk(a, chunks.length));
-  if (b) chunks.push(makeChunk(b, chunks.length));
-}
-
-function mergeTinyChunks(chunks: Chunk[]): Chunk[] {
-  if (chunks.length <= 1) return chunks.map((c, i) => ({ ...c, index: i }));
-  const merged: Chunk[] = [];
-  for (let i = 0; i < chunks.length; i++) {
-    const c = chunks[i];
-    if (c.wordCount < MIN_CHUNK_WORDS && merged.length > 0) {
-      const last = merged[merged.length - 1];
-      merged[merged.length - 1] = makeChunk(last.text + ' ' + c.text, last.index);
-    } else {
-      merged.push({ ...c, index: merged.length });
+  // Also check if the very first chunk was too small and can merge forward
+  if (merged.length > 1) {
+    const firstCount = merged[0].split(/\s+/).filter(Boolean).length;
+    const secondCount = merged[1].split(/\s+/).filter(Boolean).length;
+    if (firstCount < TARGET_MIN_WORDS && firstCount + secondCount <= TARGET_MAX_WORDS + 4) {
+      const first = merged.shift()!;
+      merged[0] = first + ' ' + merged[0];
     }
   }
-  return merged;
+
+  return merged.map((text, index) => ({
+    index,
+    text,
+    wordCount: text.split(/\s+/).filter(Boolean).length,
+  }));
+}
+
+function splitOnCommaGroups(text: string, maxWords: number, out: string[]): void {
+  const commaParts = text.split(/(?<=,)\s+/).map(p => p.trim()).filter(Boolean);
+  if (commaParts.length <= 1) {
+    const conjSplit = splitOnConjunction(text, maxWords);
+    if (conjSplit) {
+      out.push(...conjSplit);
+    } else {
+      out.push(text);
+    }
+    return;
+  }
+
+  let cur = '';
+  for (const part of commaParts) {
+    if (!cur) {
+      cur = part;
+    } else {
+      const combinedCount = (cur + ' ' + part).split(/\s+/).filter(Boolean).length;
+      if (combinedCount <= maxWords) {
+        cur += ' ' + part;
+      } else {
+        out.push(cur);
+        cur = part;
+      }
+    }
+  }
+  if (cur) out.push(cur);
+}
+
+function splitOnConjunction(text: string, maxWords: number): string[] | null {
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return null;
+  const mid = Math.floor(words.length / 2);
+  const conjRegex = /^(and|but|or|for|so|that|because)$/i;
+  for (let offset = 0; offset <= 4; offset++) {
+    for (const idx of [mid + offset, mid - offset]) {
+      if (idx > 2 && idx < words.length - 2 && conjRegex.test(words[idx])) {
+        return [
+          words.slice(0, idx).join(' '),
+          words.slice(idx).join(' '),
+        ];
+      }
+    }
+  }
+  return [
+    words.slice(0, mid).join(' '),
+    words.slice(mid).join(' '),
+  ];
 }
 
 // ─── Exercise generation ──────────────────────────────────────────────────────
@@ -405,23 +434,29 @@ export function generateExercise(
 
     case 'easy-blanks': {
       const blankPositions = selectBlanks(words, 0.25, weakSet);
+      const blankAnswers: Record<number, string> = {};
+      for (const pos of blankPositions) blankAnswers[pos] = words[pos];
       return {
         type,
         chunkIndices: activeChunkIndices,
         promptText: '',
         displayText: buildBlankedText(words, blankPositions),
         blankPositions,
+        blankAnswers,
       };
     }
 
     case 'hard-blanks': {
       const blankPositions = selectBlanks(words, 0.5, weakSet);
+      const blankAnswers: Record<number, string> = {};
+      for (const pos of blankPositions) blankAnswers[pos] = words[pos];
       return {
         type,
         chunkIndices: activeChunkIndices,
         promptText: '',
         displayText: buildBlankedText(words, blankPositions),
         blankPositions,
+        blankAnswers,
       };
     }
 

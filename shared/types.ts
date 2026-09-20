@@ -44,6 +44,7 @@ export interface MemoryVerse {
   updatedAt?:string;
   difficulty_level?:number;
   difficultyLevel?:number;
+  chunks?:string;
   current_chunk_index?:number;
   currentChunkIndex?:number;
   mastery:MasteryLevel;
@@ -68,6 +69,7 @@ export interface Exercise {
   wordBank?:string[];     // for word-bank level
   missingIndices?:number[]; // word indices that are blanked
   blankPositions?:number[];
+  blankAnswers?:Record<number, string>;
 }
 export interface AttemptResult {
   score:number;           // 0–1

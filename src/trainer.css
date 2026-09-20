@@ -46,8 +46,22 @@
 .training-session .master-display { font: 22px/1.8 Georgia, serif; background: var(--paper); border: 1px solid #ded8cb; border-radius: 14px; padding: 28px 32px; margin: 18px 0; }
 .blanked-text { font: 20px/1.9 Georgia, serif; background: var(--paper); border: 1px solid #ded8cb; border-radius: 14px; padding: 24px 28px; }
 .blank-word { display: inline-block; min-width: 70px; border-bottom: 2px solid var(--green); margin: 0 3px; text-align: center; }
-.blank-input { border: none; border-bottom: 2px solid var(--green); background: none; font: 20px/1.9 Georgia, serif; width: 90px; padding: 0 2px; outline: none; color: var(--green); text-align: center; }
-.blank-input:focus { border-bottom-color: #c69b49; }
+.blank-input {
+  border: none;
+  border-bottom: 2px solid var(--green);
+  background: none;
+  font: 20px/1.9 Georgia, serif;
+  min-width: 75px;
+  max-width: 240px;
+  padding: 0 4px;
+  outline: none;
+  color: var(--green);
+  text-align: center;
+  border-radius: 4px 4px 0 0;
+  transition: border-color .15s, background .15s;
+}
+.blank-input:focus { border-bottom-color: #c69b49; background: rgba(198, 155, 73, 0.1); }
+.blank-input.correct-live { border-bottom-color: #315d4c; color: #315d4c; background: rgba(49, 93, 76, 0.08); }
 
 /* Word bank */
 .word-bank { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }

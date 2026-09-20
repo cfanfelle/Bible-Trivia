@@ -159,6 +159,18 @@ function MemoryLibrary({
                   <div className="memory-item-meta">
                     <MasteryBadge level={v.mastery ?? 'learning'} />
                     <small style={{ color: '#788079' }}>Level {LEVEL_NAMES[v.difficulty_level ?? 1]}</small>
+                    {v.chunks && (
+                      <small style={{ color: '#788079' }}>
+                        {(() => {
+                          try {
+                            const count = JSON.parse(v.chunks).length;
+                            return `${count} ${count === 1 ? 'chunk' : 'chunks'}`;
+                          } catch {
+                            return '';
+                          }
+                        })()}
+                      </small>
+                    )}
                     {isDue && <span className="mastery-badge learning" style={{ background: '#fff0d8', color: '#b65f39' }}>Due for review</span>}
                     {nextDate && !isDue && <small style={{ color: '#788079' }}>Next review: {nextDate}</small>}
                     {v.successful_reviews !== undefined && v.successful_reviews > 0 && (
@@ -349,17 +361,32 @@ function TrainingSession({ verse, onBack, onRefreshVerse }: {
               {newLevel > level ? '↑ Level up!' : '↓ More practice'}
             </span>
           )}
-          <button
-            className="ghost-btn"
-            style={{ marginLeft: 'auto', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', background: 'none', border: '1px solid #d0d7d2', borderRadius: 4, cursor: 'pointer', color: '#555' }}
-            onClick={async () => {
-              await api('memory:restart-chunk', verse.id);
-              await loadExercise();
-            }}
-            title="Start this chunk over from Study mode"
-          >
-            <RotateCcw size={12} /> Restart Chunk
-          </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+            <button
+              className="ghost-btn"
+              style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px', background: 'none', border: '1px solid #d0d7d2', borderRadius: 6, cursor: 'pointer', color: '#555' }}
+              onClick={async () => {
+                await api('memory:restart-chunk', verse.id);
+                await loadExercise();
+              }}
+              title="Start this chunk over from Study mode"
+            >
+              <RotateCcw size={12} /> Restart Chunk
+            </button>
+            <button
+              className="ghost-btn"
+              style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px', background: 'none', border: '1px solid #d0d7d2', borderRadius: 6, cursor: 'pointer', color: '#555' }}
+              onClick={async () => {
+                if (confirm(`Re-chunk this verse into natural, coherent sections? (Resets current chunk progress)`)) {
+                  await api('memory:rechunk', verse.id);
+                  await loadExercise();
+                }
+              }}
+              title="Re-split this verse into larger, natural chunks"
+            >
+              Re-chunk Verse
+            </button>
+          </div>
         </div>
       </div>
 
@@ -390,6 +417,153 @@ function TrainingSession({ verse, onBack, onRefreshVerse }: {
   );
 }
 
+function BlankFillExercise({
+  exercise,
+  blankInputs,
+  setBlankInputs,
+  onSubmit,
+  submitting,
+}: {
+  exercise: Exercise;
+  blankInputs: Record<number, string>;
+  setBlankInputs: (r: Record<number, string>) => void;
+  onSubmit: () => void;
+  submitting: boolean;
+}) {
+  const words = exercise.displayText.split(' ');
+  const blankPositions = exercise.blankPositions ?? words.map((w, i) => (w === '___' ? i : -1)).filter(i => i >= 0);
+  const inputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+
+  // Auto-focus the first blank when exercise loads
+  useEffect(() => {
+    if (blankPositions.length > 0) {
+      const firstIdx = blankPositions[0];
+      const timer = setTimeout(() => {
+        inputRefs.current[firstIdx]?.focus();
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [exercise.displayText]);
+
+  const handleKeyDown = (wordIdx: number, posIdx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === ' ') {
+      e.preventDefault();
+      const currentVal = (blankInputs[wordIdx] ?? '').trim();
+      if (currentVal.length > 0 && posIdx < blankPositions.length - 1) {
+        const nextIdx = blankPositions[posIdx + 1];
+        inputRefs.current[nextIdx]?.focus();
+      }
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (posIdx < blankPositions.length - 1) {
+        const nextIdx = blankPositions[posIdx + 1];
+        inputRefs.current[nextIdx]?.focus();
+      } else if (!submitting) {
+        onSubmit();
+      }
+      return;
+    }
+
+    if (e.key === 'Backspace') {
+      const currentVal = blankInputs[wordIdx] ?? '';
+      if (currentVal === '' && posIdx > 0) {
+        e.preventDefault();
+        const prevIdx = blankPositions[posIdx - 1];
+        inputRefs.current[prevIdx]?.focus();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowRight') {
+      const input = inputRefs.current[wordIdx];
+      if (input && input.selectionStart === input.value.length && posIdx < blankPositions.length - 1) {
+        e.preventDefault();
+        const nextIdx = blankPositions[posIdx + 1];
+        inputRefs.current[nextIdx]?.focus();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowLeft') {
+      const input = inputRefs.current[wordIdx];
+      if (input && input.selectionStart === 0 && posIdx > 0) {
+        e.preventDefault();
+        const prevIdx = blankPositions[posIdx - 1];
+        inputRefs.current[prevIdx]?.focus();
+      }
+      return;
+    }
+  };
+
+  const handleChange = (wordIdx: number, posIdx: number, rawVal: string) => {
+    // If user typed space inside the input
+    if (rawVal.includes(' ')) {
+      const cleanVal = rawVal.replace(/\s+/g, '').trim();
+      setBlankInputs({ ...blankInputs, [wordIdx]: cleanVal });
+      if (posIdx < blankPositions.length - 1) {
+        const nextIdx = blankPositions[posIdx + 1];
+        inputRefs.current[nextIdx]?.focus();
+      }
+      return;
+    }
+
+    const updated = { ...blankInputs, [wordIdx]: rawVal };
+    setBlankInputs(updated);
+
+    // Auto-advance if the typed word matches the expected word
+    const expected = exercise.blankAnswers?.[wordIdx];
+    if (expected) {
+      const normTyped = rawVal.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const normExpected = expected.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (normTyped.length >= 3 && normTyped === normExpected) {
+        if (posIdx < blankPositions.length - 1) {
+          const nextIdx = blankPositions[posIdx + 1];
+          setTimeout(() => {
+            inputRefs.current[nextIdx]?.focus();
+          }, 40);
+        }
+      }
+    }
+  };
+
+  return (
+    <>
+      <p className="recall-prompt">Fill in the missing words from memory. Press <b>Space</b> or <b>Enter</b> to advance between blanks.</p>
+      <div className="blanked-text">
+        {words.map((w, i) => {
+          if (w !== '___') return <React.Fragment key={i}>{w} </React.Fragment>;
+          const posIdx = blankPositions.indexOf(i);
+          const expected = exercise.blankAnswers?.[i] ?? '';
+          const currentVal = blankInputs[i] ?? '';
+          const normTyped = currentVal.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+          const normExpected = expected.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+          const isMatch = normExpected.length > 0 && normTyped === normExpected;
+          const inputWidth = Math.max(75, Math.min(220, (Math.max(expected.length, currentVal.length) + 1) * 13));
+
+          return (
+            <input
+              key={i}
+              ref={el => { inputRefs.current[i] = el; }}
+              className={`blank-input${isMatch ? ' correct-live' : ''}`}
+              style={{ width: `${inputWidth}px` }}
+              value={currentVal}
+              onKeyDown={e => handleKeyDown(i, posIdx, e)}
+              onChange={e => handleChange(i, posIdx, e.target.value)}
+              placeholder="..."
+            />
+          );
+        })}
+      </div>
+      <button className="primary" style={{ marginTop: 16 }} onClick={onSubmit} disabled={submitting}>
+        {submitting ? 'Checking…' : 'Submit (Enter)'}
+      </button>
+    </>
+  );
+}
+
 function ExerciseView({
   exercise, attempt, setAttempt, blankInputs, setBlankInputs,
   usedBankWords, setUsedBankWords, onSubmit, submitting, textareaRef, level, verse,
@@ -411,10 +585,16 @@ function ExerciseView({
     case 'study':
       return (
         <>
-          <p className="recall-prompt">Read and study this passage. Press Continue when you feel familiar with it.</p>
+          <p className="recall-prompt">{exercise.promptText || 'Read and study this passage. Press Continue when you feel familiar with it.'}</p>
           <div className="master-display">{exercise.displayText}</div>
-          <button className="primary" style={{ marginTop: 18 }} onClick={onSubmit} disabled={submitting}>
-            {submitting ? 'Saving…' : 'Continue'}
+          <button
+            className="primary"
+            style={{ marginTop: 18 }}
+            onClick={onSubmit}
+            disabled={submitting}
+            autoFocus
+          >
+            {submitting ? 'Saving…' : 'Continue (Enter)'}
           </button>
         </>
       );
@@ -463,30 +643,16 @@ function ExerciseView({
     }
 
     case 'easy-blanks':
-    case 'hard-blanks': {
-      const words = exercise.displayText.split(' ');
+    case 'hard-blanks':
       return (
-        <>
-          <p className="recall-prompt">Fill in the missing words from memory.</p>
-          <div className="blanked-text">
-            {words.map((w, i) => {
-              if (w !== '___') return <React.Fragment key={i}>{w} </React.Fragment>;
-              return (
-                <input
-                  key={i}
-                  className="blank-input"
-                  value={blankInputs[i] ?? ''}
-                  onChange={e => setBlankInputs({ ...blankInputs, [i]: e.target.value })}
-                />
-              );
-            })}
-          </div>
-          <button className="primary" style={{ marginTop: 16 }} onClick={onSubmit} disabled={submitting}>
-            {submitting ? 'Checking…' : 'Submit'}
-          </button>
-        </>
+        <BlankFillExercise
+          exercise={exercise}
+          blankInputs={blankInputs}
+          setBlankInputs={setBlankInputs}
+          onSubmit={onSubmit}
+          submitting={submitting}
+        />
       );
-    }
 
     case 'first-letters':
       return (
@@ -497,13 +663,19 @@ function ExerciseView({
             ref={textareaRef}
             className="recall-textarea"
             style={{ marginTop: 16 }}
-            placeholder="Type the passage here…"
+            placeholder="Type the passage here… (Press Enter to submit)"
             value={attempt}
             onChange={e => setAttempt(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!submitting && attempt.trim()) onSubmit();
+              }
+            }}
             autoFocus
           />
           <button className="primary" style={{ marginTop: 12 }} onClick={onSubmit} disabled={submitting || !attempt.trim()}>
-            {submitting ? 'Checking…' : 'Submit'}
+            {submitting ? 'Checking…' : 'Submit (Enter)'}
           </button>
         </>
       );
@@ -517,13 +689,19 @@ function ExerciseView({
           <textarea
             ref={textareaRef}
             className="recall-textarea"
-            placeholder="Type from memory…"
+            placeholder="Type from memory… (Press Enter to submit)"
             value={attempt}
             onChange={e => setAttempt(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!submitting && attempt.trim()) onSubmit();
+              }
+            }}
             autoFocus
           />
           <button className="primary" style={{ marginTop: 12 }} onClick={onSubmit} disabled={submitting || !attempt.trim()}>
-            {submitting ? 'Checking…' : 'Submit'}
+            {submitting ? 'Checking…' : 'Submit (Enter)'}
           </button>
         </>
       );
@@ -577,8 +755,8 @@ function ResultDisplay({ result, expectedText, level, onContinue }: {
         </p>
       )}
 
-      <button className="primary" style={{ marginTop: 18 }} onClick={onContinue}>
-        Continue
+      <button className="primary" style={{ marginTop: 18 }} onClick={onContinue} autoFocus>
+        Continue (Enter)
       </button>
     </div>
   );
@@ -661,13 +839,19 @@ function ReviewSession({ onBack }: { onBack: () => void }) {
           <p className="recall-prompt">Type <b>{verse.reference}</b> from memory.</p>
           <textarea
             className="recall-textarea"
-            placeholder="Type from memory…"
+            placeholder="Type from memory… (Press Enter to submit)"
             value={attempt}
             onChange={e => setAttempt(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!submitting && attempt.trim()) submit();
+              }
+            }}
             autoFocus
           />
           <button className="primary" style={{ marginTop: 12 }} onClick={submit} disabled={submitting || !attempt.trim()}>
-            {submitting ? 'Checking…' : 'Submit'}
+            {submitting ? 'Checking…' : 'Submit (Enter)'}
           </button>
         </>
       )}

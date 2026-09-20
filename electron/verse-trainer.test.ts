@@ -136,13 +136,21 @@ describe('chunkText', () => {
     expect(chunks.length).toBe(1);
   });
 
-  it('splits multi-sentence text into multiple chunks', () => {
+  it('splits multi-sentence text into coherent chunks', () => {
     const text = 'God is love. Love is patient. Love is kind.';
     const chunks = chunkText(text);
     expect(chunks.length).toBeGreaterThanOrEqual(1);
     // Concatenated text should cover the original words
     const allWords = chunks.map(c => c.text).join(' ');
     expect(allWords.length).toBeGreaterThan(0);
+  });
+
+  it('chunks Joshua 1:7-8 into ~5 natural clauses instead of 10 tiny fragments', () => {
+    const joshua = '"Be strong and very courageous. Be careful to obey all the law my servant Moses gave you; do not turn from it to the right or to the left, that you may be successful wherever you go. Keep this Book of the Law always on your lips; meditate on it day and night, so that you may be careful to do everything written in it. Then you will be prosperous and successful.';
+    const chunks = chunkText(joshua);
+    expect(chunks.length).toBe(5);
+    // Every chunk should have at least 6 words
+    chunks.forEach(c => expect(c.wordCount).toBeGreaterThanOrEqual(6));
   });
 
   it('chunk indices are 0-based and sequential', () => {
@@ -172,6 +180,16 @@ describe('generateExercise', () => {
     expect(ex.type).toBe('word-bank');
     expect(Array.isArray(ex.wordBank)).toBe(true);
     expect(ex.wordBank!.length).toBeGreaterThan(0);
+  });
+
+  it('easy-blanks and hard-blanks provide blankAnswers dictionary', () => {
+    const exEasy = generateExercise(CHUNKS, [0], 3, []);
+    expect(exEasy.blankAnswers).toBeDefined();
+    expect(Object.keys(exEasy.blankAnswers!).length).toBe(exEasy.blankPositions!.length);
+
+    const exHard = generateExercise(CHUNKS, [0], 4, []);
+    expect(exHard.blankAnswers).toBeDefined();
+    expect(Object.keys(exHard.blankAnswers!).length).toBe(exHard.blankPositions!.length);
   });
 
   it('level 8 → full-recall type', () => {

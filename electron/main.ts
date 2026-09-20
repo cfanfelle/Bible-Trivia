@@ -291,7 +291,7 @@ function registerVerseTrainer(){
  }
  ipcMain.handle('memory:list',()=>{
   if(!activeProfileId)throw new Error('No profile');
-  const verses=user.prepare('SELECT v.*,t.difficulty_level,t.current_chunk_index,r.mastery,r.next_review_date,r.last_reviewed,r.review_interval_days,r.successful_reviews,r.total_reviews FROM memory_verses v LEFT JOIN memory_training t ON t.verse_id=v.id LEFT JOIN memory_reviews r ON r.verse_id=v.id WHERE v.profile_id=? ORDER BY v.created_at DESC').all(activeProfileId);
+  const verses=user.prepare('SELECT v.*,t.difficulty_level,t.current_chunk_index,t.chunks,r.mastery,r.next_review_date,r.last_reviewed,r.review_interval_days,r.successful_reviews,r.total_reviews FROM memory_verses v LEFT JOIN memory_training t ON t.verse_id=v.id LEFT JOIN memory_reviews r ON r.verse_id=v.id WHERE v.profile_id=? ORDER BY v.created_at DESC').all(activeProfileId);
   return verses;
  });
  ipcMain.handle('memory:due-count',()=>{
@@ -433,6 +433,14 @@ function registerVerseTrainer(){
   const v=getVerse(Number(id));
   if(!v||v.profile_id!==activeProfileId)throw new Error('Verse not found.');
   user.prepare('UPDATE memory_training SET difficulty_level=1 WHERE verse_id=?').run(v.id);
+  return getVerse(v.id);
+ });
+ ipcMain.handle('memory:rechunk',(_,id)=>{
+  if(!activeProfileId)throw new Error('No profile');
+  const v=getVerse(Number(id));
+  if(!v||v.profile_id!==activeProfileId)throw new Error('Verse not found.');
+  const chunks=chunkText(v.master_text);
+  user.prepare('UPDATE memory_training SET difficulty_level=1,chunks=?,current_chunk_index=0,weak_words=?,performance_log=? WHERE verse_id=?').run(JSON.stringify(chunks),'[]','[]',v.id);
   return getVerse(v.id);
  });
  ipcMain.handle('memory:review-list',()=>{
