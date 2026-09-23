@@ -129,66 +129,76 @@ export function generateCrossword(clues: ClueRecord[]): CrosswordResult | null {
   const sorted = [...clues].sort((a, b) => b.answerNormalized.length - a.answerNormalized.length);
 
   // Try starting with the longest word, but if that fails, try other starting words
-  const maxStartAttempts = Math.min(5, sorted.length);
+  const maxStartAttempts = Math.min(sorted.length, 10);
   for (let startIdx = 0; startIdx < maxStartAttempts; startIdx++) {
-    const grid: Grid = new Map();
-    const placed: Array<{ clueId: string; answer: string; row: number; col: number; direction: 'across' | 'down' }> = [];
+    // Try deterministic greedy first, then slight rotation passes if needed
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const grid: Grid = new Map();
+      const placed: Array<{ clueId: string; answer: string; row: number; col: number; direction: 'across' | 'down' }> = [];
 
-    // Place first word horizontally at origin
-    const first = sorted[startIdx];
-    for (let i = 0; i < first.answerNormalized.length; i++) {
-      grid.set(cellKey(0, i), { letter: first.answerNormalized[i] });
-    }
-    placed.push({ clueId: first.id, answer: first.answerNormalized, row: 0, col: 0, direction: 'across' });
+      // Place first word horizontally at origin
+      const first = sorted[startIdx];
+      for (let i = 0; i < first.answerNormalized.length; i++) {
+        grid.set(cellKey(0, i), { letter: first.answerNormalized[i] });
+      }
+      placed.push({ clueId: first.id, answer: first.answerNormalized, row: 0, col: 0, direction: 'across' });
 
-    const unplaced = sorted.filter((_, idx) => idx !== startIdx);
+      let unplaced = sorted.filter((_, idx) => idx !== startIdx);
+      if (attempt > 0) {
+        unplaced = [...unplaced.slice(attempt), ...unplaced.slice(0, attempt)];
+      }
 
-    let failed = false;
-    while (unplaced.length > 0) {
-      let bestCandidate: { wordIndex: number; placement: Placement } | null = null;
-      for (let i = 0; i < unplaced.length; i++) {
-        const p = findBestPlacement(unplaced[i].answerNormalized, placed, grid);
-        if (p) {
-          if (!bestCandidate || p.intersections > bestCandidate.placement.intersections) {
-            bestCandidate = { wordIndex: i, placement: p };
+      let failed = false;
+      while (unplaced.length > 0) {
+        let bestCandidate: { wordIndex: number; placement: Placement } | null = null;
+        for (let i = 0; i < unplaced.length; i++) {
+          const p = findBestPlacement(unplaced[i].answerNormalized, placed, grid);
+          if (p) {
+            if (!bestCandidate || p.intersections > bestCandidate.placement.intersections) {
+              bestCandidate = { wordIndex: i, placement: p };
+            }
           }
         }
+        if (!bestCandidate) {
+          failed = true;
+          break;
+        }
+        const [nextWord] = unplaced.splice(bestCandidate.wordIndex, 1);
+        applyPlacement(nextWord, bestCandidate.placement, placed, grid);
       }
-      if (!bestCandidate) {
-        failed = true;
-        break;
+
+      if (failed || placed.length < sorted.length) {
+        continue;
       }
-      const [nextWord] = unplaced.splice(bestCandidate.wordIndex, 1);
-      applyPlacement(nextWord, bestCandidate.placement, placed, grid);
+
+      // Normalise grid so min row/col = 0
+      const rows = [...grid.keys()].map(k => parseInt(k.split(',')[0]));
+      const cols = [...grid.keys()].map(k => parseInt(k.split(',')[1]));
+      const minRow = Math.min(...rows);
+      const minCol = Math.min(...cols);
+
+      const normalisedPlaced = placed.map(p => ({
+        ...p,
+        row: p.row - minRow,
+        col: p.col - minCol,
+      }));
+
+      const maxRow = Math.max(...rows) - minRow;
+      const maxCol = Math.max(...cols) - minCol;
+
+      // Assign crossword numbers (standard: left-to-right, top-to-bottom)
+      const numberedWords = assignNumbers(normalisedPlaced, maxRow + 1, maxCol + 1);
+
+      const result: CrosswordResult = {
+        words: numberedWords,
+        rows: maxRow + 1,
+        cols: maxCol + 1,
+      };
+
+      if (validateCrosswordLayout(result)) {
+        return result;
+      }
     }
-
-    if (failed || placed.length < sorted.length) {
-      continue;
-    }
-
-    // Normalise grid so min row/col = 0
-    const rows = [...grid.keys()].map(k => parseInt(k.split(',')[0]));
-    const cols = [...grid.keys()].map(k => parseInt(k.split(',')[1]));
-    const minRow = Math.min(...rows);
-    const minCol = Math.min(...cols);
-
-    const normalisedPlaced = placed.map(p => ({
-      ...p,
-      row: p.row - minRow,
-      col: p.col - minCol,
-    }));
-
-    const maxRow = Math.max(...rows) - minRow;
-    const maxCol = Math.max(...cols) - minCol;
-
-    // Assign crossword numbers (standard: left-to-right, top-to-bottom)
-    const numberedWords = assignNumbers(normalisedPlaced, maxRow + 1, maxCol + 1);
-
-    return {
-      words: numberedWords,
-      rows: maxRow + 1,
-      cols: maxCol + 1,
-    };
   }
 
   return null;
@@ -273,25 +283,31 @@ function isValidPlacement(
     if (existing) {
       // Must be same letter
       if (existing.letter !== word[i]) return false;
+
+      // Cannot share a cell with another word in the same direction
+      const sameDirOverlap = placed.some(pw => {
+        if (pw.direction !== direction) return false;
+        const pdr = pw.direction === 'down' ? 1 : 0;
+        const pdc = pw.direction === 'across' ? 1 : 0;
+        for (let j = 0; j < pw.answer.length; j++) {
+          if (pw.row + pdr * j === r && pw.col + pdc * j === c) return true;
+        }
+        return false;
+      });
+      if (sameDirOverlap) return false;
+
       hasIntersection = true;
-      // At an intersection cell we skip the perpendicular adjacency check
-      // (the crossing word already owns those perpendicular cells)
+      // At an intersection cell, the perpendicular word passes through this cell legitimately
     } else {
-      // Non-intersection cell: perpendicular neighbours must be empty
-      const perpR1 = r + dc; // for 'across', dc=1 → checking row offset... wait
-      // For 'across' word: dr=0, dc=1. Perpendicular is vertical (±1 row, same col)
-      // For 'down' word: dr=1, dc=0. Perpendicular is horizontal (same row, ±1 col)
-      const perpDr = dc; // swap
+      // Non-intersection cell: perpendicular neighbours must be strictly empty.
+      // For 'across' word (dr=0, dc=1), perp is vertical (dr=1, dc=0): check (r-1, c) and (r+1, c).
+      // For 'down' word (dr=1, dc=0), perp is horizontal (dr=0, dc=1): check (r, c-1) and (r, c+1).
+      // If a perpendicular neighbour is filled, it would either touch another word or create
+      // an unintended perpendicular letter run without a clue.
+      const perpDr = dc;
       const perpDc = dr;
-      if (grid.has(cellKey(r + perpDr, c + perpDc))) {
-        // Only invalid if that neighbour is not part of an intersecting word
-        // Check if the cell in the perpendicular direction is part of a word
-        // going in perpendicular direction
-        if (!isCellPartOfDirectionWord(r + perpDr, c + perpDc, direction, placed)) return false;
-      }
-      if (grid.has(cellKey(r - perpDr, c - perpDc))) {
-        if (!isCellPartOfDirectionWord(r - perpDr, c - perpDc, direction, placed)) return false;
-      }
+      if (grid.has(cellKey(r + perpDr, c + perpDc))) return false;
+      if (grid.has(cellKey(r - perpDr, c - perpDc))) return false;
     }
   }
 
@@ -300,25 +316,150 @@ function isValidPlacement(
 }
 
 /**
- * Check whether a cell at (r,c) belongs to a word going in `dir`.
- * Used to allow legitimate intersections while blocking accidental merges.
+ * Validate that an entire crossword layout conforms to standard crossword rules:
+ * 1. Every contiguous horizontal run of letters of length >= 2 exactly matches an Across clue.
+ * 2. Every contiguous vertical run of letters of length >= 2 exactly matches a Down clue.
+ * 3. No un-clued adjacent letters or merged words exist anywhere in the grid.
+ * 4. All words are connected in a single graph component.
  */
-function isCellPartOfDirectionWord(
-  r: number,
-  c: number,
-  newWordDir: 'across' | 'down',
-  placed: Array<{ answer: string; row: number; col: number; direction: 'across' | 'down' }>,
-): boolean {
-  const perp: 'across' | 'down' = newWordDir === 'across' ? 'down' : 'across';
-  return placed.some(pw => {
-    if (pw.direction !== perp) return false;
-    const dr = pw.direction === 'down' ? 1 : 0;
-    const dc = pw.direction === 'across' ? 1 : 0;
-    for (let i = 0; i < pw.answer.length; i++) {
-      if (pw.row + dr * i === r && pw.col + dc * i === c) return true;
+export function validateCrosswordLayout(result: CrosswordResult): boolean {
+  const { words, rows, cols } = result;
+  if (!words || words.length === 0) return false;
+  if (rows <= 0 || cols <= 0) return false;
+
+  // Reconstruct 2D grid
+  const grid: (string | null)[][] = Array.from({ length: rows }, () => Array(cols).fill(null));
+
+  for (const w of words) {
+    const dr = w.direction === 'down' ? 1 : 0;
+    const dc = w.direction === 'across' ? 1 : 0;
+    if (w.row < 0 || w.col < 0) return false;
+    if (w.row + dr * (w.length - 1) >= rows || w.col + dc * (w.length - 1) >= cols) return false;
+
+    for (let i = 0; i < w.length; i++) {
+      const r = w.row + dr * i;
+      const c = w.col + dc * i;
+      const char = w.answer[i];
+      if (grid[r][c] !== null && grid[r][c] !== char) {
+        return false; // Letter clash
+      }
+      grid[r][c] = char;
     }
-    return false;
-  });
+  }
+
+  // Find all maximal horizontal letter runs of length >= 2
+  const horizontalRuns: Array<{ row: number; col: number; length: number; text: string }> = [];
+  for (let r = 0; r < rows; r++) {
+    let startCol = -1;
+    let text = '';
+    for (let c = 0; c <= cols; c++) {
+      const ch = c < cols ? grid[r][c] : null;
+      if (ch !== null) {
+        if (startCol === -1) startCol = c;
+        text += ch;
+      } else {
+        if (startCol !== -1) {
+          if (text.length >= 2) {
+            horizontalRuns.push({ row: r, col: startCol, length: text.length, text });
+          }
+          startCol = -1;
+          text = '';
+        }
+      }
+    }
+  }
+
+  // Find all maximal vertical letter runs of length >= 2
+  const verticalRuns: Array<{ row: number; col: number; length: number; text: string }> = [];
+  for (let c = 0; c < cols; c++) {
+    let startRow = -1;
+    let text = '';
+    for (let r = 0; r <= rows; r++) {
+      const ch = r < rows ? grid[r][c] : null;
+      if (ch !== null) {
+        if (startRow === -1) startRow = r;
+        text += ch;
+      } else {
+        if (startRow !== -1) {
+          if (text.length >= 2) {
+            verticalRuns.push({ row: startRow, col: c, length: text.length, text });
+          }
+          startRow = -1;
+          text = '';
+        }
+      }
+    }
+  }
+
+  const acrossWords = words.filter(w => w.direction === 'across');
+  const downWords = words.filter(w => w.direction === 'down');
+
+  // Count must match exactly
+  if (horizontalRuns.length !== acrossWords.length) return false;
+  if (verticalRuns.length !== downWords.length) return false;
+
+  // Each horizontal run must match an across word exactly
+  for (const hr of horizontalRuns) {
+    const match = acrossWords.find(
+      w => w.row === hr.row && w.col === hr.col && w.length === hr.length && w.answer === hr.text
+    );
+    if (!match) return false;
+  }
+
+  // Each vertical run must match a down word exactly
+  for (const vr of verticalRuns) {
+    const match = downWords.find(
+      w => w.row === vr.row && w.col === vr.col && w.length === vr.length && w.answer === vr.text
+    );
+    if (!match) return false;
+  }
+
+  // Check connectivity: all words must belong to a single connected component
+  if (words.length > 1) {
+    const adj = new Map<number, Set<number>>();
+    for (let i = 0; i < words.length; i++) adj.set(i, new Set());
+
+    const cellToWords = new Map<string, number[]>();
+    for (let idx = 0; idx < words.length; idx++) {
+      const w = words[idx];
+      const dr = w.direction === 'down' ? 1 : 0;
+      const dc = w.direction === 'across' ? 1 : 0;
+      for (let i = 0; i < w.length; i++) {
+        const k = `${w.row + dr * i},${w.col + dc * i}`;
+        const list = cellToWords.get(k) ?? [];
+        list.push(idx);
+        cellToWords.set(k, list);
+      }
+    }
+
+    for (const wordIndices of cellToWords.values()) {
+      if (wordIndices.length > 1) {
+        for (let i = 0; i < wordIndices.length; i++) {
+          for (let j = i + 1; j < wordIndices.length; j++) {
+            adj.get(wordIndices[i])!.add(wordIndices[j]);
+            adj.get(wordIndices[j])!.add(wordIndices[i]);
+          }
+        }
+      }
+    }
+
+    const visited = new Set<number>();
+    const queue = [0];
+    visited.add(0);
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      for (const neighbor of adj.get(curr)!) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          queue.push(neighbor);
+        }
+      }
+    }
+
+    if (visited.size !== words.length) return false;
+  }
+
+  return true;
 }
 
 function applyPlacement(

@@ -4,7 +4,7 @@ import path from 'node:path'; import fs from 'node:fs'; import Database from './
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url'; import { ensureContent } from './content.js'; import { userMigrations } from './migrations.js'; import { fullQuizQuestions, levelFromXp, shuffled, streak, medalFor } from './domain.js';
 import { readChapter, searchVerses } from './bible.js';
-import { generateCrossword, selectClues, selectDailyClues, normalizeCrosswordAnswer } from './crossword.js';
+import { generateCrossword, selectClues, selectDailyClues, normalizeCrosswordAnswer, validateCrosswordLayout } from './crossword.js';
 import type { ClueRecord } from './crossword.js';
 import { chunkText, compareAttempt, generateExercise, adaptLevel, computeNextTrainingStep, updateWeakWords, scheduleNextReview, computeMastery, normalizeForComparison, tokenize } from './verse-trainer.js';
 import type { WeakWord, PerformanceEntry } from './verse-trainer.js';
@@ -164,6 +164,15 @@ function registerCrossword(){
   if(!activeProfileId)throw new Error('No profile');
   const row:any=user.prepare('SELECT * FROM crossword_boards WHERE profile_id=? AND book_id=?').get(activeProfileId,String(bookId));
   if(!row)return null;
+  let valid = false;
+  try {
+    valid = validateCrosswordLayout(JSON.parse(row.grid_data));
+  } catch {}
+  if (!valid) {
+    // Stored board is corrupted or has illegal letter adjacencies; clear it so a clean board is generated
+    user.prepare('DELETE FROM crossword_boards WHERE profile_id=? AND book_id=?').run(activeProfileId,String(bookId));
+    return null;
+  }
   const pool=dbCluesForBook(String(bookId));
   return buildBoardState(String(bookId),row,pool);
  });
@@ -233,7 +242,17 @@ function registerCrossword(){
   if(!activeProfileId)throw new Error('No profile');
   const date=isoDay();
   const existing:any=user.prepare('SELECT * FROM daily_crossword WHERE profile_id=? AND local_date=?').get(activeProfileId,date);
-  if(existing)return buildBoardState('daily',{...existing,book_id:'daily'},dbAllClues());
+  if(existing){
+    let valid = false;
+    try {
+      valid = validateCrosswordLayout(JSON.parse(existing.grid_data));
+    } catch {}
+    if (valid) {
+      return buildBoardState('daily',{...existing,book_id:'daily'},dbAllClues());
+    }
+    // Stored daily board has invalid letter adjacencies; clear it so a clean board is regenerated
+    user.prepare('DELETE FROM daily_crossword WHERE profile_id=? AND local_date=?').run(activeProfileId,date);
+  }
   // Create today's daily board
   const pool=dbAllClues();
   const selected=selectDailyClues(pool,date,Math.min(5,pool.length>=5?5:pool.length>=3?3:pool.length));

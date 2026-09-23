@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeCrosswordAnswer, seededLcg, selectClues, selectDailyClues, generateCrossword } from './crossword.js';
-import type { ClueRecord } from './crossword.js';
+import { normalizeCrosswordAnswer, seededLcg, selectClues, selectDailyClues, generateCrossword, validateCrosswordLayout } from './crossword.js';
+import type { ClueRecord, CrosswordResult } from './crossword.js';
 
 function makeClue(id: string, answer: string): ClueRecord {
   const normalized = normalizeCrosswordAnswer(answer);
@@ -236,6 +236,124 @@ describe('curated crossword clues bank', () => {
       const layout = generateCrossword(selected);
       expect(layout).not.toBeNull();
       expect(layout!.words.length).toBe(15);
+      expect(validateCrosswordLayout(layout!)).toBe(true);
     }
   });
 });
+
+describe('crossword layout validation and adjacency bug prevention', () => {
+  it('validateCrosswordLayout rejects a layout where words touch perpendicularly creating unintended letter runs', () => {
+    // Recreate the exact failure case from the screenshot:
+    // TONGUES (down, length 7) at col 3, rows 0..6
+    // AARON (across, length 5) at row 7, cols 1..5 -> cell (7,3) is 'R', directly below 'S' at (6,3)
+    // SAVED (across, length 5) at row 5, cols 0..4
+    // PHARAOH (down, length 7) at col 1, rows 3..9
+    // STAFF (across, length 5) at row 0, cols 2..6
+    const invalidLayout: CrosswordResult = {
+      rows: 10,
+      cols: 8,
+      words: [
+        { clueId: 'STAFF', answer: 'STAFF', row: 0, col: 2, direction: 'across', number: 1, length: 5 },
+        { clueId: 'TONGUES', answer: 'TONGUES', row: 0, col: 3, direction: 'down', number: 2, length: 7 },
+        { clueId: 'PHARAOH', answer: 'PHARAOH', row: 3, col: 1, direction: 'down', number: 3, length: 7 },
+        { clueId: 'SAVED', answer: 'SAVED', row: 5, col: 0, direction: 'across', number: 4, length: 5 },
+        { clueId: 'AARON', answer: 'AARON', row: 7, col: 1, direction: 'across', number: 5, length: 5 },
+      ],
+    };
+
+    // Column 3 has:
+    // (0,3)=T, (1,3)=O, (2,3)=N, (3,3)=G, (4,3)=U, (5,3)=E, (6,3)=S, (7,3)=R -> "TONGUESR" (8 letters)
+    // This must fail validation because column 3 has an 8-letter run, not a 7-letter run!
+    expect(validateCrosswordLayout(invalidLayout)).toBe(false);
+  });
+
+  it('generates a valid board for the screenshot clues without unintended adjacencies', () => {
+    const screenshotClues: ClueRecord[] = [
+      makeClue('EXO-STAFF', 'STAFF'),
+      makeClue('ACT-SAVED', 'SAVED'),
+      makeClue('EXO-AARON', 'AARON'),
+      makeClue('ACT-TONGUES', 'TONGUES'),
+      makeClue('GEN-PHARAOH', 'PHARAOH'),
+    ];
+
+    const layout = generateCrossword(screenshotClues);
+    expect(layout).not.toBeNull();
+    if (layout) {
+      expect(layout.words.length).toBe(5);
+      expect(validateCrosswordLayout(layout)).toBe(true);
+
+      // Verify that TONGUES never has an adjacent letter immediately before or after its column
+      const tongues = layout.words.find(w => w.answer === 'TONGUES')!;
+      const dr = tongues.direction === 'down' ? 1 : 0;
+      const dc = tongues.direction === 'across' ? 1 : 0;
+
+      // Build cell map of other words
+      const otherCells = new Map<string, string>();
+      for (const w of layout.words) {
+        if (w === tongues) continue;
+        const wdr = w.direction === 'down' ? 1 : 0;
+        const wdc = w.direction === 'across' ? 1 : 0;
+        for (let i = 0; i < w.length; i++) {
+          otherCells.set(`${w.row + wdr * i},${w.col + wdc * i}`, w.answer[i]);
+        }
+      }
+
+      // Check cell directly before TONGUES
+      const beforeKey = `${tongues.row - dr},${tongues.col - dc}`;
+      expect(otherCells.has(beforeKey)).toBe(false);
+
+      // Check cell directly after TONGUES (where 'R' was incorrectly placed in the screenshot)
+      const afterKey = `${tongues.row + dr * tongues.length},${tongues.col + dc * tongues.length}`;
+      expect(otherCells.has(afterKey)).toBe(false);
+    }
+  });
+
+  it('guarantees that all generated daily crosswords across 30 dates pass validateCrosswordLayout', async () => {
+    const { CROSSWORD_CLUES } = await import('./content.js');
+    const allClues: ClueRecord[] = CROSSWORD_CLUES.map(c => ({
+      id: c[0],
+      bookId: c[1],
+      clueText: c[5],
+      answer: c[6],
+      answerNormalized: c[7],
+      reference: c[8],
+    }));
+
+    for (let day = 1; day <= 30; day++) {
+      const dateStr = `2026-09-${String(day).padStart(2, '0')}`;
+      const selected = selectDailyClues(allClues, dateStr, 5);
+      if (Array.isArray(selected) && selected.length >= 3) {
+        const layout = generateCrossword(selected);
+        if (layout) {
+          expect(validateCrosswordLayout(layout)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('guarantees that all generated book crosswords pass validateCrosswordLayout', async () => {
+    const { CROSSWORD_CLUES } = await import('./content.js');
+    for (const book of ['GEN', 'EXO', 'ACT']) {
+      const bookClues: ClueRecord[] = CROSSWORD_CLUES.filter(c => c[1] === book).map(c => ({
+        id: c[0],
+        bookId: c[1],
+        clueText: c[5],
+        answer: c[6],
+        answerNormalized: c[7],
+        reference: c[8],
+      }));
+
+      // Test multiple random seeds / selections
+      for (let i = 0; i < 5; i++) {
+        const selected = selectClues(bookClues, 15, []);
+        if (Array.isArray(selected)) {
+          const layout = generateCrossword(selected);
+          if (layout) {
+            expect(validateCrosswordLayout(layout)).toBe(true);
+          }
+        }
+      }
+    }
+  });
+});
+
